@@ -17,7 +17,7 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 
 ## Key Components
 
-- **Webapp:** The bulk of the project. It provides the frontend for file organization, data processing, task handling, and minor analysis.
+- **Webapp:** A user friendly frontend for file organization, data processing, task handling, and minor analysis.
 
 - **Backend:** The application hosted through Flask, and is backed by a PostgreSQL server, the RabbitMQ message broker, and the Celery job queue.
 
@@ -38,20 +38,20 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 - **Convenience:** The output of this pipeline will have both structural variants and single nucleotide variants combined into one file, in the same format. Information that was not retained when utilizing VEP is recovered and inserted into the output files.
 
 ## Installation
-This pipeline was developed and tested on Ubuntu. It has not been tested on Windows, and it is unlikely to work. Other debian-based distros may work, such as Mint, but they are similarly untested. 
+This pipeline was developed and tested on Ubuntu. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows host, but in depth knowledge will be required to set up.
 1. Install Docker on the to-be host machine.
 2. Download the polarpipelineserver folder to the host machine.
 3. Run ```sudo docker compose up -d --build``` in the polarpipelineserver directory.
-4. The Polar Pipeline webapp will build and begin hosting. The default IP on the host machine is ```10.20.0.88:5000```.
+4. The Polar Pipeline webapp will build and begin hosting. The default IP on the host machine is ```10.20.0.88:5000```, but ```localhost:5000``` will work.
 5. Create worker machines following the instructions in the setup page on the Polar Pipeline website.
 
 ## Usage
-1. Place fastq, fastq.gz, or .bam files to be processed in the polarpipelineserver folder's 'input' directory.
+1. Place fastq, fastq.gz, or .bam files to be processed in the polarpipelineserver folder's 'mnt' directory.
 2. Go to the configuration tab on the Polar Pipeline website, and upload needed reference files, clair models, bed files, and gene source files.
 3. Go to the home page of the Polar Pipeline website and select the file to be processed.
 4. Make selections, including what type of sample, a bed file to intersect with, etc.
 5. Hit start, and head to the dashboard tab to view progress.
-6. Cross your fingers. Output will be as defined in the configuration tab, under the "General" dropdown.
+6. Output will be as defined in the configuration tab, under the "General" dropdown. This is in reference to the worker computers, not the host.
 
 ## Contribution
 Even though the programs are not included in this repository, the following tools are necessary for the usage of the Polar Pipeline.
