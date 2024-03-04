@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./services/web
+    command: python manage.py run -h 0.0.0.0
+    volumes:
+      - ./services/web/:/usr/src/app
+      - ./services/databases:/usr/src/app/databases
+      - ./mnt:/mnt
+    ports:
+      - 5000:5000
+    env_file:
+      - ./services/.env.dev
+    networks:
+      static-network:
+        ipv4_address: 10.20.0.88
+  status:
+    build: ./services/status
+    command: python statusDaemon.py
+    volumes:
+      - ./services/status:/usr/src/app/status
+    env_file:
+      - ./services/.env.dev
+    networks:
+      static-network:
+        ipv4_address: 10.20.0.77
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./services/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=polarPL
+      - POSTGRES_PASSWORD=polarpswd
+      - POSTGRES_DB=polarDB
+    ports:
+      - 5432:5432
+    networks:
+      static-network:
+        ipv4_address: 10.20.0.66
+  rabbitmq:
+    image: "rabbitmq:3.12.6-management"
+    ports:
+      - "5672:5672"  # AMQP
+      - "15672:15672"  # RabbitMQ Management UI
+    networks:
+      static-network:
+        ipv4_address: 10.20.0.55
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 10.20.0.0/16
+volumes:
+  postgres_data:
+  output:
+  input:
+  databases:
+    

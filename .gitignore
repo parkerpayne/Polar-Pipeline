@@ -1,0 +1,8 @@
+**/databases/*.bed
+**/bed_files/*
+**/clair_models/*
+**/file_datatypes/*
+**/gene_source/*
+**/reference_files/*
+**/search/*
+**/vep

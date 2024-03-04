@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ file_name }} - Polar Pipeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .navbar {
+            background-color: #333;
+        }
+
+        .navbar .nav-link {
+            color: #ddd;
+        }
+
+        f .navbar .nav-link:hover {
+            color: #fff;
+        }
+
+        .container {
+            margin-top: 2rem;
+        }
+
+        .file-info-container {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-container {
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+        }
+
+        .download-table {
+            margin-top: 1.5rem;
+        }
+
+        .download-table th,
+        .download-table td {
+            vertical-align: middle;
+        }
+
+        .download-table .btn {
+            white-space: nowrap;
+        }
+
+        .download-table tbody tr:nth-of-type(odd) {
+            background-color: #f2f2f2;
+        }
+
+        .custom-file-label {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .centered-button {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .btn-submit {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .btn-submit:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
+        .sticky-top {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0; /* Adjust the desired top offset */
+            z-index: 1000; /* Adjust the z-index as needed */
+            background-color: #fff; /* Set a background color if needed */
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('id') }}">ID Generator</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reportresult') }}">Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
+                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
+                        <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
+                        <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('configuration') }}">Configuration</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="file-info-container">
+                    <h3>Run Information: {{ file_name }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="dashboard-container">
+                    <h4><strong>Status:</strong> <span id="status">{{ status }}</span></h4>
+                    <strong>Running on:</strong> <span id="computer">{{ computer }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="dashboard-container">
+                    <h4><strong>Timings</strong></h4>
+                    <strong>Start Time:</strong> <span id="startTime">{{ startTime }}</span><br>
+                    <strong>End Time:</strong> <span id="endTime">{{ endTime }}</span><br>
+                    <strong>Runtime:</strong> <span id="runtime">{{ runtime }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="dashboard-container">
+                    <h4><strong>Selections</strong></h4>
+                    <strong>Clair model:</strong> <span>{{ clair_model }}</span><br>
+                    <strong>Reference:</strong> <span>{{ reference }}</span><br>
+                    <table class="table table-striped" style="margin-top: 1rem">
+                        <thead>
+                            <tr>
+                                <th scope="col">Bed File</th>
+                                <th scope="col">Gene Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in bed_file %}
+                            <tr>
+                                <td>{{ bed_file[loop.index-1] }}</td>
+                                <td>{{ gene_source[loop.index-1] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="dashboard-container">
+                    <h4><strong>Run Summary</strong></h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Metric</th>
+                                <th scope="col">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    <td>{{ rows[loop.index-1][0] }}</td>
+                                    <td>{{ rows[loop.index-1][1] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-bottom: 2rem;">
+            <div class="col-lg-12">
+                {% if endTime == 'N/A' %}
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#cancelRunModal">
+                        Cancel Run<span class="oi oi-plus" aria-hidden="true"></span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        
+    </div>
+
+    
+
+    <div class="modal fade" id="cancelRunModal" tabindex="-1" role="dialog" aria-labelledby="cancelRunModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelRunModalLabel">Cancel Run</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Canceling this run will wait for the current process to finish, then delete all in-progress
+                        files. Are you sure you want to cancel?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" onclick="window.location.href=`{{ url_for('abort', id=id) }}`"
+                        class="btn btn-danger">Confirm</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function updateInfo(id) {
+            var statusElement = document.getElementById('status');
+            var endTimeElement = document.getElementById('endTime');
+            var runtimeElement = document.getElementById('runtime');
+            var startTimeElement = document.getElementById('startTime');
+            var computerElement = document.getElementById('computer');
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/get_info/' + id);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    statusElement.textContent = response.status;
+                    startTimeElement.textContent = response.startTime;
+                    endTimeElement.textContent = response.endTime;
+                    runtimeElement.textContent = response.runtime;
+                    computerElement.textContent = response.computer;
+                }
+            };
+            xhr.send();
+        }
+
+        // Get the file name from the Flask route parameter (you may need to adapt this based on your actual route)
+        var id = '{{ id }}';
+        var file_name = '{{ file_name }}';
+        var endTime = '{{ endTime }}';
+        var startTime = '{{ startTime }}';
+        var computer = '{{ computer }}';
+        var status = '{{ status }}';
+        // Call the updateInfo function every second
+        if (status != "complete") {
+            setInterval(function () {
+                updateInfo(id);
+                // if complete call function to make downloads appear
+            }, 1000);
+        } else {
+            // call function to make downloads appear
+        }
+    </script>
+
+</body>
+
+</html>

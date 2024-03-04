@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup - Polar Pipeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .navbar {
+            background-color: #333;
+        }
+        
+        .navbar .nav-link {
+            color: #ddd;
+        }
+        
+        .navbar .nav-link:hover {
+            color: #fff;
+        }
+        
+        /* Remove width and margin styles from container-middle */
+        /* .container-middle {
+            width: 50%;
+            margin: 0 auto;
+        } */
+
+        /* Add padding and background color to dashboard-container */
+        .dashboard-container {
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+        }
+
+        /* Add margin to setup header */
+        .dashboard-container h3:first-child {
+            margin-top: 0;
+        }
+        .terminal-card {
+            background-color: #222;
+            color: #f8f8f8;
+            border: 1px solid #444;
+            padding-top: 25px;
+            position: relative; /* For positioning the top bar */
+            border-radius: 10px;
+        }
+
+        .terminal-card-bar {
+            height: 30px;
+            background-color: #444;
+            display: flex;
+            justify-content: right;
+            align-items: right;
+            padding: 10px 6px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-radius: 10px 10px 0px 0px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .red {
+            background-color: #f45f5f;
+        }
+
+        .yellow {
+            background-color: #f0c040;
+        }
+
+        .green {
+            background-color: #5fc25f;
+        }
+
+        .terminal-card-content {
+            padding: 1rem;
+        }
+
+        .terminal-card code {
+            color: #f8f8f8;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        .sticky-top {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0; /* Adjust the desired top offset */
+            z-index: 1000; /* Adjust the z-index as needed */
+            background-color: #fff; /* Set a background color if needed */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('id') }}">ID Generator</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reportresult') }}">Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
+                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
+                        <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
+                        <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('configuration') }}">Configuration</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Use Bootstrap grid system to create a responsive layout -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="container" style="min-height: 1rem"></div>
+
+                <div class="dashboard-container">
+                    <h3>Setup (DEPRICATED)</h3>
+                    <p>This page will walk you though the entire process to set up a new computer. The downloads should all be linked on this page, so no need to go find stuff yourself. The pipeline is designed for machines running Ubuntu, and I am relatively confident that it will not work on Windows.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>1 - Pipeline Files</h3>
+                    <p>The files for the pipeline itself are <a href="#">here</a>. Unzip the contents into the Documents folder.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>2 - Minimap</h3>
+                    <p>Minimap can be found <a href="#">here</a>. The default configuration (which can be changed) is to unzip into the home directory.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>3 - Samtools</h3>
+                    <p>The samtools download is <a href="#">here</a>. Similar to minimap, unzip the samtools into the home directory.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>4 - Nextflow</h3>
+                    <p>Install nextflow using the following commands (can be run anywhere):</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light red"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light green"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>curl -s https://get.nextflow.io | bash<br>sudo mv nextflow /usr/local/bin</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>5 - Vep</h3>
+                    <p>Download the vep zip <a href="#">here</a>. Both folders will be placed into the home directory.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>7 - Merge</h3>
+                    <p>Download the merge files <a href="#">here</a>. All the python files will be placed into the root of the Documents directory, same place as the pipeline python file itself.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>8 - Bedtools</h3>
+                    <p>Install bedtools using the command:</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light red"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light green"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>sudo apt install bedtools</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container" style="min-height:100px"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function updateFileLabel(input) {
+            var fileName = input.files[0].name;
+            var label = input.nextElementSibling;
+            label.textContent = fileName;
+        }
+    </script>
+</body>
+</html>
