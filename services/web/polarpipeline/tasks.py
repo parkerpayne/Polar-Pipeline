@@ -1,5 +1,8 @@
+import sys
+sys.path.append('/usr/src/app/polarpipeline')
+
 from celery import Celery
-from polarpipeline import lib
+from lib import *
 import time
 import sys
 import os
@@ -53,7 +56,7 @@ app = Celery('tasks', broker='pyamqp://guest:guest@10.21.5.24:5672/')
 
 @app.task
 def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):
-
+    
     clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
     gene_source_path = []
     for name in gene_source_name:
@@ -66,13 +69,13 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
     # bed_file_path = os.path.join('/mnt/pipeline_resources/bed_files', bed_file_name)
 
     pc_name = whoami()
-
+    
     CONFIG_FILE_PATH = '/mnt/pipeline_resources/config.ini'
 
     config = configparser.ConfigParser()
 
     config.read(CONFIG_FILE_PATH)
-
+    
     if not os.path.isdir(config['General']['output_directory']):
         update_db(id, 'status', 'output path not found')
         quit()

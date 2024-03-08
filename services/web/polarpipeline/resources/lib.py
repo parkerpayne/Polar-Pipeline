@@ -152,9 +152,9 @@ def whoami():
 def connect():
     db_config = {
         'dbname': 'polarDB',
-        'user': 'threadripper',
-        'password': 'Epididymis0!',
-        'host': '10.21.4.63',
+        'user': 'polarPL',
+        'password': 'polarpswd',
+        'host': '10.21.5.24',
         'port': '5432',
     }
     return psycopg2.connect(**db_config)
@@ -416,10 +416,10 @@ def vep(input_snv, input_sv, reference_path, threads='30', output_snv='output', 
 #   return: none. does more damage the more the user likes you.
 
     pc_name = whoami()
-    run_name = input_snv.strip().split('/')[-1].split('.vcf')[0]
-    if input_snv.endswith('.gz'):
-        subprocess.run(["pigz", "-d", run_name+".wf_snp.vcf.gz"], cwd='/'.join(input_snv.strip().split('/')[:-1]))
-        input_snv = input_snv.split('.gz')[0]
+    run_name = input_sv.strip().split('/')[-1].split('.wf_')[0]
+    # if input_snv.endswith('.gz'):
+    #     subprocess.run(["pigz", "-d", run_name+".sepAlt.wf_snp.vcf.gz"], cwd='/'.join(input_snv.strip().split('/')[:-1]))
+    #     input_snv = input_snv.split('.gz')[0]
     if input_sv.endswith('.gz'):
         subprocess.run(["pigz", "-d", run_name+".wf_sv.vcf.gz"], cwd='/'.join(input_snv.strip().split('/')[:-1]))
         input_sv = input_sv.split('.gz')[0]

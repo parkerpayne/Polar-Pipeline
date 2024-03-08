@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/usr/src/app/polarpipeline')
 from celery import Celery
 from lib import *
 import time
@@ -9,70 +11,29 @@ from datetime import datetime
 
 app = Celery('tasks', broker='pyamqp://guest:guest@10.21.5.24:5672/')
 
-# def help():
-#     print('\t-i: input directory (no default, must be set)\n\
-#     \t-o: output directory (no default, must be set)\n\
-#     \t-n: sample name (default: SAMPLE)\n\
-#     \t-b: bed file (default: shared_storage/shared_resources/intersect_wiht_these_clinically_relevant3.bed)\n\
-#     \t-g: gene source file (default: shared_storage/shared_resources/GENE_SOURCE_column.txt)')
-#     quit()
-
-# starting_point = 'default'
-
-# for i in range(0, len(sys.argv)):
-#     if sys.argv[i].startswith('-'):
-#         flag = sys.argv[i].split('-')[-1]
-#         match flag:
-#             case 'b':
-#                 bed_file = sys.argv[i+1]
-#             case 'g':
-#                 gene_source_file = sys.argv[i+1]
-#             case 'o':
-#                 output_dir = sys.argv[i+1]
-#             case 'i':
-#                 input_dir = sys.argv[i+1]
-#             case 'n':
-#                 run_name = sys.argv[i+1]
-#             case 's':
-#                 starting_point = sys.argv[i+1]
-#             case 'c':
-#                 clair_model = sys.argv[i+1]
-#             case 'r':
-#                 reference_file = sys.argv[i+1]
-#             case 'help':
-#                 help()
-#             case default:
-#                 print('Unrecognized flag: -' + sys.argv[i][-1])
-#                 help()
-
-# if input_dir == '' or output_dir == '':
-#     print("input or output path not specified.")
-#     quit()
-
-
 
 @app.task
 def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):
-
-    clair_model_path = os.path.join('/mnt/pipeline_resources/resources/clair_models', clair_model_name)
+    
+    clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
     gene_source_path = []
     for name in gene_source_name:
-        gene_source_path.append(os.path.join('/mnt/pipeline_resources/resources/gene_source',name))
-    # gene_source_path = os.path.join('/mnt/pipeline_resources/resources/gene_source', gene_source_name)
-    reference_path = os.path.join('/mnt/pipeline_resources/resources/reference_files', reference_file_name)
+        gene_source_path.append(os.path.join('/mnt/pipeline_resources/gene_source',name))
+    # gene_source_path = os.path.join('/mnt/pipeline_resources/gene_source', gene_source_name)
+    reference_path = os.path.join('/mnt/pipeline_resources/reference_files', reference_file_name)
     bed_file_path = []
     for name in bed_file_name:
-        bed_file_path.append(os.path.join('/mnt/pipeline_resources/resources/bed_files',name))
-    # bed_file_path = os.path.join('/mnt/pipeline_resources/resources/bed_files', bed_file_name)
+        bed_file_path.append(os.path.join('/mnt/pipeline_resources/bed_files',name))
+    # bed_file_path = os.path.join('/mnt/pipeline_resources/bed_files', bed_file_name)
 
     pc_name = whoami()
-
-    CONFIG_FILE_PATH = '/mnt/pipeline_resources/resources/config.ini'
+    
+    CONFIG_FILE_PATH = '/mnt/pipeline_resources/config.ini'
 
     config = configparser.ConfigParser()
 
     config.read(CONFIG_FILE_PATH)
-
+    
     if not os.path.isdir(config['General']['output_directory']):
         update_db(id, 'status', 'output path not found')
         quit()
@@ -432,16 +393,16 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
 
 @app.task
 def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_name, id):
-    clair_model_path = os.path.join('/mnt/pipeline_resources/resources/clair_models', clair_model_name)
-    reference_path = os.path.join('/mnt/pipeline_resources/resources/reference_files', reference_file_name)
+    clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
+    reference_path = os.path.join('/mnt/pipeline_resources/reference_files', reference_file_name)
     bed_file_path = []
     for name in bed_file_name:
-        bed_file_path.append(os.path.join('/mnt/pipeline_resources/resources/bed_files', name))
-    # bed_file_path = os.path.join('/mnt/pipeline_resources/resources/bed_files', bed_file_name)
+        bed_file_path.append(os.path.join('/mnt/pipeline_resources/bed_files', name))
+    # bed_file_path = os.path.join('/mnt/pipeline_resources/bed_files', bed_file_name)
 
     pc_name = whoami()
 
-    CONFIG_FILE_PATH = '/mnt/pipeline_resources/resources/config.ini'
+    CONFIG_FILE_PATH = '/mnt/pipeline_resources/config.ini'
 
     config = configparser.ConfigParser()
 

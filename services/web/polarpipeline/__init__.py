@@ -1,10 +1,13 @@
+import sys
+sys.path.append('/usr/src/app/polarpipeline')
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, SubmitField
-from .tasks import process, processT2T
+from tasks import process, processT2T
 from flask_wtf import FlaskForm
 from datetime import datetime
-from .lib import update_db
+from lib import update_db
 import urllib.parse
 import configparser
 import pandas as pd
@@ -1343,42 +1346,35 @@ def frequency(_chr='X', pos='X', ref='X', alt='X'):
         id = f'chr{chr}_{pos}_{ref}/{alt}'
     print(id)
 
-    # variant = []
+    variant = []
+    folders = [f for f in os.listdir('./polarpipeline/resources/frequency') if os.path.isdir(os.path.join('./polarpipeline/resources/frequency', f))]
+    if not folders:
+        return None
+    pattern = re.compile(r'\d{2}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}')
+    newest_folder = max(folders, key=lambda folder: datetime.strptime(pattern.search(folder).group(), '%d-%m-%y_%H-%M-%S'))
+    directory = os.path.join('./polarpipeline/resources/frequency', newest_folder)
 
-    # for line in open('/home/threadripper/shared_storage/frequency/variantCatalogue2.csv'):
-    #     if line.startswith(id):
-    #         variant = line.strip().split(',')[:-1]
-    #         source = line.strip().split(',')[-1].split(';')
-    #         return render_template('frequency.html', variant=variant, source=source, placeholder=id, done='green')
-    # return render_template('frequency.html', variant=variant, source=['not found'], placeholder=id, done='green')
+    variant_catalogue = os.path.join(directory, 'variantCatalogue.tsv')
+    file_key = os.path.join(directory, 'fileKey.tsv')
 
-    query = f"select * from frequency where id = '{id}' limit 1"
-    try:
-        conn = psycopg2.connect(**db_config)
-        cursor = conn.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        # column_names = [desc[0] for desc in cursor.description]
-        cursor.close()
-        conn.close()
+    fileDirectory = {}
+    for line in open(file_key):
+        fileName, fileNum = line.strip().split('\t')
+        fileDirectory[fileNum] = fileName
+    print(fileDirectory)
 
-        total = sum(map(int, rows[0][1:-1]))
+    for line in open(variant_catalogue):
+        if line.startswith(id):
+            variant = line.strip().split(',')[:-1]
+            source = []
+            for item in line.strip().split(',')[-1].split(';'):
+                try:
+                    source.append(fileDirectory[item])
+                except:
+                    pass
+            return render_template('frequency.html', variant=variant, source=source, placeholder=id, done='green')
+    return render_template('frequency.html', variant=variant, source=['not found'], placeholder=id, done='green')
 
-        variant = []
-        total = 0
-        for item in rows[0][:-1]:
-            if item != id:
-                total += int(item)
-            variant.append(item)
-        variant.append(total)
-        
-        return render_template('frequency.html', variant=variant, source=rows[0][-1], placeholder=id, done='green')
-        # return render_template('dashboard.html', rows = rows)
-    except Exception as e:
-        color = 'red'
-        print(e)
-        return render_template('frequency.html', variant=variant, source=['not found'], placeholder=id, done='green')
-    
 
 
 
@@ -1632,7 +1628,7 @@ def beginsearch():
             #     filecols.append(col)
             # print(filecols)
             parser.read(os.path.join('./polarpipeline/resources/file_datatypes', f'{file}.ini'))
-            for row in open(search_db_parser['DEFAULT'][file]):
+            for row in open(os.path.join('/usr/src/app/', search_db_parser['DEFAULT'][file])):
                 if row.startswith('#'): continue
                 valid = True
                 line = row.strip().split('\t')

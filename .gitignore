@@ -5,4 +5,7 @@
 **/gene_source/*
 **/reference_files/*
 **/search/*
+**/mnt/*
 **/vep
+**/.nextflow*
+**/frequency/*
