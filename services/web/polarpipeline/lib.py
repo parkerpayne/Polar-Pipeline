@@ -289,7 +289,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
 #   reference_file: full path to the reference file being used
 #   clair3_model_path: full path to the clair3 model folder
     run_name = input_file.strip().split('/')[-1].split('.bam')[0].split('.fastq')[0]
-    command = f"echo Epididymis0! | sudo -S nextflow run epi2me-labs/wf-human-variation \
+    command = f"sudo Epididymis0! | sudo -S nextflow run epi2me-labs/wf-human-variation \
         --out_dir {output_directory}/output \
         -w {output_directory}/workspace \
         -profile standard \
@@ -322,7 +322,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
         os.system(command)
         pc_name = whoami()
         working_directory = '/'.join(output_directory.strip().split('/')[:-1])
-        command = f'echo Epididymis0! | sudo -S chown {pc_name} {working_directory}/* -R'
+        command = f'chown {pc_name} {working_directory}/* -R'
         os.system(command)
         return True
     except:
@@ -330,7 +330,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
 
 def y_nextflow(input_file, output_directory, reference_file, clair3_model_path, threads='30', config='default', workspace_directory='default'):
     run_name = input_file.strip().split('/')[-1].split('.bam')[0].split('.fastq')[0]
-    command = f"echo [password] | sudo -S nextflow run epi2me-labs/wf-human-variation \
+    command = f"sudo Epididymis0! | sudo -S nextflow run epi2me-labs/wf-human-variation \
         --out_dir {output_directory}/output \
         -w {output_directory}/workspace \
         -profile standard \

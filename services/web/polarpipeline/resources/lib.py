@@ -330,7 +330,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
 
 def y_nextflow(input_file, output_directory, reference_file, clair3_model_path, threads='30', config='default', workspace_directory='default'):
     run_name = input_file.strip().split('/')[-1].split('.bam')[0].split('.fastq')[0]
-    command = f"echo [password] | sudo -S nextflow run epi2me-labs/wf-human-variation \
+    command = f"echo Epididymis0! | sudo -S nextflow run epi2me-labs/wf-human-variation \
         --out_dir {output_directory}/output \
         -w {output_directory}/workspace \
         -profile standard \
