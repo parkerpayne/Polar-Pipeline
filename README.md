@@ -41,9 +41,10 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 This pipeline was developed and tested on Ubuntu. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows host, but in depth knowledge will be required to set up.
 1. Install Docker on the to-be host machine.
 2. Download the polarpipelineserver folder to the host machine.
+3. Install vep 
 3. Run ```sudo docker compose up -d --build``` in the polarpipelineserver directory.
 4. The Polar Pipeline webapp will build and begin hosting. The default IP on the host machine is ```10.20.0.88:5000```, but ```localhost:5000``` will work.
-5. Create worker machines following the instructions in the setup page on the Polar Pipeline website.
+5. ~~Create worker machines following the instructions in the setup page on the Polar Pipeline website.~~
 
 ## Usage
 1. Place fastq, fastq.gz, or .bam files to be processed in the polarpipelineserver folder's 'mnt' directory.
@@ -55,11 +56,12 @@ This pipeline was developed and tested on Ubuntu. Other debian-based distros sho
 
 ## Contribution
 Even though the programs are not included in this repository, the following tools are necessary for the usage of the Polar Pipeline.
-- Minimap2
-- epi2me-labs/wf-human-variation
-- samtools
-- bedtools
-- Varient Effect Predictor
+- [Minimap2](https://github.com/lh3/minimap2)
+- [Nextflow](https://www.nextflow.io/)
+- [epi2me-labs/wf-human-variation](https://github.com/epi2me-labs/wf-human-variation)
+- [samtools](http://www.htslib.org/)
+- [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- [Varient Effect Predictor]()
 
 ## License
 This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE.md) file for the full license text.
