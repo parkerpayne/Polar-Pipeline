@@ -284,7 +284,6 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
         opened.write(''.join(output))
     with open(os.path.join(variantdir, run_name+'_merged_N0.bed'), 'w') as nozeros:
         for line in output:
-            if line.startswith('#'): nozeros.write(line)
             if line.strip().split('\t')[8] != '0':
                 nozeros.write(line)
     with open('/'.join(working_path.split('/')[:-1])+'temp.bed', 'w') as opened:

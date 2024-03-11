@@ -61,7 +61,8 @@ while not signal_received:
 
         if not statusList:
             cursor.execute("""
-                DELETE FROM status;
+                UPDATE status 
+                SET status = 'OFFLINE'
             """)
 
         conn.commit()
