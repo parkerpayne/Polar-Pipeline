@@ -41,6 +41,8 @@ services:
         ipv4_address: 10.20.0.66
   rabbitmq:
     image: "rabbitmq:3.12.6-management"
+    env_file:
+      - ./services/rabbit/.env.dev
     ports:
       - "5672:5672"  # AMQP
       - "15672:15672"  # RabbitMQ Management UI
