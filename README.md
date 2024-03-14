@@ -41,12 +41,12 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 This pipeline was developed and tested on Ubuntu. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows host, but in depth knowledge will be required to set up.
 1. Install Docker on the to-be host machine.
 2. Download the polarpipelineserver folder to the host machine.
-3. Install vep, putting the ```ensembl-vep```, ```.vep```, and ```vep-resources``` folders inside ```/services/web/vep``` along with the ```GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta``` and index file.
+3. Install vep, putting the ```ensembl-vep```, ```.vep```, and ```vep-resources``` folders inside ```../polar-pipeline-docker/services/web/vep``` along with the ```GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta``` and index file.
 4. Inside ```/mnt/```, create new directories for all locations you want accessible to the workers. You must ensure that the pipeline's ```/mnt/``` mirrors that of the workers. Use NFS to connect these directories as normal.
 5. Run ```sudo docker compose up -d --build``` in the polarpipelineserver directory.
 6. The Polar Pipeline webapp will build and begin hosting. The default IP on the host machine is ```10.20.0.88:5000```, but ```localhost:5000``` will work.
 7. In the configuration, set the output directory (in reference to the worker), thread counts for workers, and upload reference, gene source files, bed files, file locations, etc.
-8. ~~Create worker machines following the instructions in the setup page on the Polar Pipeline website.~~
+8. Create worker machines following the instructions in the setup page on the Polar Pipeline website.
 
 ## Usage
 1. Place fastq, fastq.gz, or .bam files to be processed in the polarpipelineserver folder's 'mnt' directory.

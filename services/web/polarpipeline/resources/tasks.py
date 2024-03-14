@@ -179,18 +179,6 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
     vep_sv_file = f'{working_path}/output/{run_name}_vep_sv.tsv'
     snipeff_file = f'{working_path}/output/{run_name}.sepAlt.wf_snp.vcf'
     sniffles_file = f'{working_path}/output/{run_name}.wf_sv.vcf'
-    # for root, dirs, files in os.walk(input_dir):
-    #     for filename in files:
-    #         if run_name+'.' in filename or run_name+"_vep" in filename:
-    #             full_path = os.path.join(root, filename)
-    #             if 'vep' in filename.lower() and 'snv' in filename.lower() and filename.endswith('.tsv'):
-    #                 vep_snv_file = os.path.join(root, filename)
-    #             if 'vep' in filename.lower() and 'sv' in filename.lower() and filename.endswith('.tsv'):
-    #                 vep_sv_file = os.path.join(root, filename)
-    #             if filename.endswith('.vcf') and ('snv' in filename.lower() or 'snp' in filename.lower()):
-    #                 snipeff_file = os.path.join(root, filename)
-    #             if filename.endswith('.vcf') and ('sv' in filename.lower()):
-    #                 sniffles_file = os.path.join(root, filename)
 
     if not os.path.isfile(vep_snv_file) or not os.path.isfile(vep_sv_file) or not os.path.isfile(snipeff_file) or not os.path.isfile(sniffles_file):
         print("failed to locate all necessary files in input directory.\nmissing:")
@@ -305,47 +293,6 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
             with open(finalfile, 'w') as openFile:
                 openFile.write('\n'.join(output))
 
-        # if not gene_source_name[i] == "No gene source":
-        #     gene_source_file = load_file(gene_source_path[i])
-        #     print('\tloaded gene source!')
-        # try:
-        #     bedoutput = intersect('/'.join(working_path.split('/')[:-1])+'temp.bed', bed_file_path[i], os.path.join(intersectdir, run_name + '_' + bed_file_name[i].replace('.bed', '.vcf')))
-        # except:
-        #     update_db(id, 'status', 'failed: intersection')
-        #     update_db(id, 'end_time', datetime.now())
-        #     quit()
-
-        # # with open(os.path.join(intersectdir, run_name + '_' + bed_file_name[i].replace('.bed', '.vcf')), 'w') as opened:
-        # #     opened.write(''.join(bedoutput))
-
-        # if not gene_source_name[i] == 'No gene source':
-        #     update_db(id, 'status', 'adding gene source')
-        #     try:
-        #         bedoutput = addGeneSource(bedoutput, gene_source_file)
-        #     except:
-        #         update_db(id, 'status', 'failed: add gene source')
-        #         update_db(id, 'end_time', datetime.now())
-        #         quit()
-            # update_db(id, 'status', 'compiling candidates')
-            # print('finding candidates...')
-            # try:
-            #     output = findCandidates(output)
-            # except:
-            #     update_db(id, 'status', 'failed: find candidates')
-            #     update_db(id, 'end_time', datetime.now())
-            #     quit()
-
-            # columns = getColumns(output)
-            # final_output = []
-            # for line in output:
-            #     tabbed_line = line.strip().split('\t')
-            #     newline = tabbed_line[:columns['PRECISION']] + [tabbed_line[columns['SYMBOL']]] + tabbed_line[columns['PRECISION']:]
-            #     final_output.append('\t'.join(newline)+'\n')
-
-            # finalfile = os.path.join(finaldir, run_name + '_' + bed_file_name[i].replace('.bed', f'_{gene_source_name[i].split(".txt")[0]}.vcf'))
-            # with open(finalfile, 'w') as openFile:
-            #     openFile.write(''.join(output))
-
         print('done!')
 
 
@@ -439,13 +386,6 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
             print('could not be found. quitting.')
             update_db(id, 'status', 'file not found')
             quit()
-    # bam = False
-    # fast5 = False
-    # for file in os.listdir(input_directory):
-    #     if file.endswith('.bam'):
-    #         bam = True
-    #         input_dir = os.path.join()
-    #     file.endswith('.fast5') or file.endswith('.pod5'):
     working_path = f'/home/{pc_name}/polarPipelineNFWork/{id}'
 
     if checksignal(id) == 'stop':
@@ -497,7 +437,6 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
         abort(working_path, id)
 
     update_db(id, 'status', 'nextflow')
-    # princess(working_path, run_name, clair_model_path, pc_name, reference_path)
     try:
         y_nextflow(input_file_path, working_path, reference_path, clair_model_path, threads)
     except:
@@ -507,11 +446,6 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
 
     if checksignal(id) == 'stop':
         abort(working_path, id)
-
-    # if not os.path.isdir(os.path.join('/home', pc_name, 'polarPipelineWork', run_name, 'analysis/result')):
-    #     update_db(id, 'status', 'failed: princess', conn)
-    #     update_db(id, 'end_time', datetime.now(), conn)
-    #     quit()        
 
     subprocess.run(["pigz", "-d", run_name+".wf_sv.vcf.gz"], cwd=f"{working_path}/output")
 
@@ -542,19 +476,6 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
         update_db(id, 'end_time', datetime.now())
         quit()
 
-    
-
-    # update_db(id, 'status', 'collapsing duplicate rows')
-    # print('collapsing duplicate rows...')
-    # try:
-    #     output = collapseDuplicateRows(output)
-    # except:
-    #     update_db(id, 'status', 'failed: collapsing duplicate rows')
-    #     update_db(id, 'end_time', datetime.now())
-    #     quit()
-
-    # if checksignal(id) == 'stop':
-    #     abort(working_path, id)
 
     resultdir = os.path.join(working_path, 'output')
     

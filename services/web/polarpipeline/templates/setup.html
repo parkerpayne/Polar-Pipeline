@@ -147,34 +147,106 @@
                 <div class="container" style="min-height: 1rem"></div>
 
                 <div class="dashboard-container">
-                    <h3>Setup (DEPRICATED)</h3>
-                    <p>This page will walk you though the entire process to set up a new computer. The downloads should all be linked on this page, so no need to go find stuff yourself. The pipeline is designed for machines running Ubuntu, and I am relatively confident that it will not work on Windows.</p>
+                    <h3>Setup</h3>
+                    <p>This page will walk you though the entire process to set up a new computer.</p>
                 </div>
 
                 <div class="dashboard-container">
-                    <h3>1 - Pipeline Files</h3>
-                    <p>The files for the pipeline itself are <a href="#">here</a>. Unzip the contents into the Documents folder.</p>
+                    <h3>1 - Dependencies</h3>
+                    <p>Install necessary dependencies using the following commands.</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>sudo apt install pigz<br>sudo apt install bedtools<br>sudo apt install tabix<br>pip install celery<br>cpan DBI<br>cpan Math::CDF<br>cpan List::MoreUtils</code>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>2 - Minimap</h3>
-                    <p>Minimap can be found <a href="#">here</a>. The default configuration (which can be changed) is to unzip into the home directory.</p>
+                    <p>Put the minimap2 folder in the home directory. You will now need to add the minimap folder to <code>PATH</code>. <code>PATH</code> is a linux environment variable.
+                        It is a string of paths separated by <code>:</code> that define what directories to search for executables in when a command is invoked.
+                        This variable is referenced by <code>$PATH</code> and can be defined in the <code>.bashrc</code> file in the home directory. Nano into the 
+                        <code>.bashrc</code> and add the following at the end.
+                    </p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>PATH="/new/minimap/path:$PATH"</code>
+                        </div>
+                    </div>
+                    <p><br>This adds the minimap directory to the front of the <code>PATH</code> variable, meaning it will be searched first, improving speed
+                        of locating minimap when running the command. The following source command refreshes the environment, updating <code>PATH</code>.</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>source .bashrc</code>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>3 - Samtools</h3>
-                    <p>The samtools download is <a href="#">here</a>. Similar to minimap, unzip the samtools into the home directory.</p>
+                    <p>Place samtools path in the home directory like minimap. Add the samtools folder to <code>PATH</code> like so:</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>PATH="/new/samtools/path:$PATH"</code>
+                        </div>
+                    </div>
+                    <p><br>Update the environment by running:</p>
+                    <div class="card terminal-card">
+                        <!-- Terminal Card Bar -->
+                        <div class="terminal-card-bar">
+                            <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
+                        </div>
+
+                        <!-- Terminal Card Content -->
+                        <div class="terminal-card-content">
+                            <code>source .bashrc</code>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>4 - Nextflow</h3>
-                    <p>Install nextflow using the following commands (can be run anywhere):</p>
+                    <p>Install nextflow using the following commands:</p>
                     <div class="card terminal-card">
                         <!-- Terminal Card Bar -->
                         <div class="terminal-card-bar">
-                            <div class="traffic-light red"></div>
-                            <div class="traffic-light yellow"></div>
                             <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
                         </div>
 
                         <!-- Terminal Card Content -->
@@ -186,28 +258,36 @@
 
                 <div class="dashboard-container">
                     <h3>5 - Vep</h3>
-                    <p>Download the vep zip <a href="#">here</a>. Both folders will be placed into the home directory.</p>
+                    <p>Install VEP and all plugins. There should be two folders in the home directory, <code>ensembl-vep</code> and <code>.vep</code>.
+                    Simply copy the <code>vep-resources</code> folder from another computer and move it to the home directory.</p>
+
+                    <p>Inside both <code>.vep</code> and <code>vep-resources</code>, there will be a file at <code>/home/{PCNAME}/.vep/Plugins/config/Condel/config/condel_SP.conf</code>
+                    The first line of that file contains a path for some reason, and this path is necessary for sift and polyphen. I don't know why. You must
+                    replace the path with the path to the Condel folder. For instance, if the file's path is 
+                    <code>/home/i9a6000/.vep/Plugins/config/Condel/config/condel_SP.conf</code>, you will define <code>condel.dir</code> as 
+                    <code>/home/i9a6000/.vep/Plugins/config/Condel</code>. Do this for both locations.</p>
                 </div>
 
                 <div class="dashboard-container">
-                    <h3>7 - Merge</h3>
-                    <p>Download the merge files <a href="#">here</a>. All the python files will be placed into the root of the Documents directory, same place as the pipeline python file itself.</p>
+                    <h3>6 - Shared Directories</h3>
+                    <p>Set up NFS for the resources. Create the NFS directory <code>/mnt/pipeline_resources/</code>. Connect it to the <code>resources</code>
+                    folder in the docker container located at <code>../polar-pipeline-docker/services/web/polarpipeline/resources</code>.</p>
                 </div>
 
                 <div class="dashboard-container">
-                    <h3>8 - Bedtools</h3>
-                    <p>Install bedtools using the command:</p>
+                    <h3>Complete</h3>
+                    <p>The setup should at this point be complete, and the worker can be started by running the celery app from the <code>/mnt/pipeline_resources</code> directory:</p>
                     <div class="card terminal-card">
                         <!-- Terminal Card Bar -->
                         <div class="terminal-card-bar">
-                            <div class="traffic-light red"></div>
-                            <div class="traffic-light yellow"></div>
                             <div class="traffic-light green"></div>
+                            <div class="traffic-light yellow"></div>
+                            <div class="traffic-light red"></div>
                         </div>
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>sudo apt install bedtools</code>
+                            <code>celery -A tasks worker --concurrency=1 --prefetch-multiplier=1 --loglevel=INFO</code>
                         </div>
                     </div>
                 </div>
