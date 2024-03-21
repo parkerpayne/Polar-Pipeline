@@ -468,6 +468,21 @@ def vep(input_snv, input_sv, reference_path, threads='30', output_snv='output', 
         f' --plugin EVE,file=/home/{pc_name}/vep-resources/eve_merged.vcf.gz',
         f' --plugin DisGeNET,file=/home/{pc_name}/vep-resources/all_variant_disease_pmid_associations_final.tsv.gz'
     ]
+    if pc_name == "prom":
+        plugins = [
+        f' --plugin LoFtool,/data/vep-resources/LoFtool_scores.txt',
+        f' --plugin Mastermind,/data/vep-resources/mastermind_cited_variants_reference-2023.04.02-grch38.vcf.gz',
+        f' --plugin CADD,/data/vep-resources/whole_genome_SNVs.tsv.gz',
+        f' --plugin Carol',
+        f' --plugin Condel,/data/.vep/Plugins/config/Condel/config',
+        f' --plugin pLI,/data/vep-resources/pLI_values.txt',
+        f' --plugin PrimateAI,/data/vep-resources/PrimateAI_scores_v0.2_GRCh38_sorted.tsv.bgz',
+        f' --plugin dbNSFP,/data/vep-resources/dbNSFP4.4a_grch38.gz,ALL',
+        f' --plugin REVEL,/data/vep-resources/new_tabbed_revel_grch38.tsv.gz',
+        f' --plugin AlphaMissense,file=/data/vep-resources/AlphaMissense_hg38.tsv.gz',
+        f' --plugin EVE,file=/data/vep-resources/eve_merged.vcf.gz',
+        f' --plugin DisGeNET,file=/data/vep-resources/all_variant_disease_pmid_associations_final.tsv.gz'
+    ]
     
     input_dir = '/'.join(input_snv.strip().split('/')[:-1])
     

@@ -843,6 +843,9 @@ def setup():
 
 @app.route('/info/<string:id>')
 def info(id):
+    
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
 
     try:
         conn = psycopg2.connect(**db_config)
@@ -878,7 +881,7 @@ def info(id):
 
         # folder_list = os.listdir('/home/threadripper/shared_storage/workspace')
         
-        statsPath = os.path.join('/mnt/synology3/polar_pipeline', startTime.replace(' ', '_').replace(':', '-')+'_'+file_name, '0_nextflow/run_summary.txt')
+        statsPath = os.path.join(config['General']['output_directory'], startTime.replace(' ', '_').replace(':', '-')+'_'+file_name, '0_nextflow/run_summary.txt')
         if os.path.isfile(statsPath):
             rows = []
             for line in open(statsPath, 'r'):
@@ -886,16 +889,6 @@ def info(id):
                 rows.append([splitline[0], splitline[1]])
         else:
             rows = []
-        
-        if rows == []:
-            statsPath = os.path.join('/mnt/synology3/polar_pipeline', startTime.replace(' ', '_').replace(':', '.')+'_'+file_name, '0_nextflow/run_summary.txt')
-            if os.path.isfile(statsPath):
-                rows = []
-                for line in open(statsPath, 'r'):
-                    splitline = line.split('\t')
-                    rows.append([splitline[0], splitline[1]])
-            else:
-                rows = []
         
         clair_model = row[7]
         bed_file = row[8].split(',')
