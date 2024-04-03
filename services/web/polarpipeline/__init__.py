@@ -1028,9 +1028,17 @@ def aminoacid(codon):
         case default:
             return codon
 
+def stopText(alt_protein, property_desc):
+    if alt_protein == 'stop':
+        return 'a premature stop codon.'
+    return f'{alt_protein}, an amino acid with {property_desc} properties.'
 
+def clinvarText(clnsig, review, trait):
+    if clnsig == '-':
+        return 'This variant is currently not curated in ClinVar.'
+    return f'This variant is curated as {clnsig.replace("_", " ").lower()} in ClinVar for the following disease(s): {trait.replace("_", " ").replace("&", "; ")} ({review.replace("_", " ").replace("&", ", ")}).'
 
-def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos, id_ref, id_alt):
+def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos, id_ref, id_alt, clinvar_text):
     rarity_text = f'The {short_amino_notation} variant occurs in less than {rarity}% of the population,\
  which is consistent with disease.\n\
  The {symbol} gene is located on Chromosome {chr}, and the variant is located at position {pos}\
@@ -1042,9 +1050,8 @@ def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation,
     
     return (f'chr{chr}_{pos}_{id_ref}/{id_alt}', f'{mane}({symbol}):{nucleotide_annotation}({amino_notation})',f'The {short_amino_notation} variant (also known as {nucleotide_annotation}), located\
  in coding exon {exon} of the {symbol} gene, results from a {ref} to {alt} substitution at nucleotide position\
- {position}. The {protein} at codon {codon} is replaced by {alt_protein}, an amino acid with\
- {property_desc} properties. This alteration is predicted to be deleterious by\
- in silico analysis ({"".join(tools)[:-1]}).\n'+rarity_text)
+ {position}. The {protein} at codon {codon} is replaced by {stopText(alt_protein, property_desc)} This alteration is predicted to be deleterious by\
+ in silico analysis ({"".join(tools)[:-1]}).\n'+rarity_text+' '+clinvar_text)
 
 def list_to_float(input):
     returnlist = []
@@ -1283,6 +1290,7 @@ def generateReport(chr, pos, ref, alt):
                 true_alt = alternate_strand_base[row["Allele"]]
 
 
+
             return(writeText(
                     row['MANE_SELECT'], 
                     f'p.{amino_abbrev[aminoacid(codons[0])][0].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][0].capitalize()}', 
@@ -1303,7 +1311,8 @@ def generateReport(chr, pos, ref, alt):
                     tools,
                     pos,
                     id_ref,
-                    id_alt
+                    id_alt,
+                    clinvarText(row['clinvar_clnsig'], row['clinvar_review'], row['clinvar_trait'])
                 ))
         except Exception as e:
             print('failed')
