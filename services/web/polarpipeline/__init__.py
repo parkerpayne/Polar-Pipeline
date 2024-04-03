@@ -11,6 +11,7 @@ from lib import update_db
 import urllib.parse
 import configparser
 import pandas as pd
+import numpy as np
 import subprocess
 import psycopg2
 import hashlib
@@ -1029,19 +1030,18 @@ def aminoacid(codon):
 
 
 
-def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos):
+def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos, id_ref, id_alt):
     rarity_text = f'The {short_amino_notation} variant occurs in less than {rarity}% of the population,\
  which is consistent with disease.\n\
- The {protein} at codon {codon} is conserved across primates, mammals, and vertebrates.\
  The {symbol} gene is located on Chromosome {chr}, and the variant is located at position {pos}\
  on the chromosome. The dbSNP identifier for this variant is\
  {dbsnp}.'
-    if rarity == '-':
+    if rarity == 0.0:
         rarity_text = f'The {short_amino_notation} variant is so rare that it is not catalogued in many common\
  human population allele frequency databases, which is consistent with disease.'
     
-    return (f'{mane}({symbol}):{nucleotide_annotation}({amino_notation})',f'The {short_amino_notation} variant (also known as {nucleotide_annotation}), located in coding exon\
- {exon} of the {symbol} gene, results from a {ref} to {alt} substitution at nucleotide position\
+    return (f'chr{chr}_{pos}_{id_ref}/{id_alt}', f'{mane}({symbol}):{nucleotide_annotation}({amino_notation})',f'The {short_amino_notation} variant (also known as {nucleotide_annotation}), located\
+ in coding exon {exon} of the {symbol} gene, results from a {ref} to {alt} substitution at nucleotide position\
  {position}. The {protein} at codon {codon} is replaced by {alt_protein}, an amino acid with\
  {property_desc} properties. This alteration is predicted to be deleterious by\
  in silico analysis ({"".join(tools)[:-1]}).\n'+rarity_text)
@@ -1120,12 +1120,15 @@ def vep(input_snv, reference_path, threads='30'):
     os.system(command)
     # print(command)
 
-@app.route('/report/<string:chr>:<string:pos>:<string:ref>:<string:alt>')
-@app.route('/report')
-def reportresult(chr='X', pos='X', ref='X', alt='X'):
-    if chr == 'X' and pos == 'X' and ref == 'X' and alt == 'X':
-        return render_template('report.html', reportText='', placeholder='chrX_XXXX_X/X')
+def round_to_nonzero(num):
+    return round(num, -int(np.floor(np.log10(abs(num)))))
+def format_float(num):
+    rounded_num = round_to_nonzero(num)
+    return np.format_float_positional(rounded_num, trim='-')
 
+report_progress_val = 0
+
+def generateReport(chr, pos, ref, alt):
     def skip_rows(line):
         return line < begin_index
 
@@ -1155,7 +1158,8 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
         'threonine': 'polar_uncharged',
         'tryptophan': 'hydrophobic_aromatic',
         'tyrosine': 'special_4',
-        'valine': 'hydrophobic'
+        'valine': 'hydrophobic',
+        'stop': 'stop'
     }
     amino_abbrev = {
         'alanine':('ala','A'),
@@ -1177,8 +1181,16 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
         'threonine':('thr','T'),
         'tryptophan':('trp','W'),
         'tyrosine':('tyr','Y'),
-        'valine':('val','V')
+        'valine':('val','V'),
+        'stop':('ter','X')
     }
+    alternate_strand_base = {
+        'G':'C',
+        'C':'G',
+        'A':'T',
+        'T':'A'
+    }
+
     begin_index = 0
     for line in open('/usr/src/app/vep/report_output.txt', 'r'):
         if line.startswith('##'):
@@ -1186,31 +1198,35 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
             continue
         if line.startswith('#'):
             break
-    
-    reportText = []
 
     df = pd.read_csv('/usr/src/app/vep/report_output.txt', sep='\t', header=0, skiprows=skip_rows)
     for index, row in df.iterrows():
+        print(row["Gene"])
         try:
             codons = row['Codons'].strip().lower().split('/')
-            print(codons)
+            print('codons:', codons)
+            print('amino acid1:', aminoacid(codons[0]), '\taminoacid2:', aminoacid(codons[1]))
             property_res = 'differing'
             if aminoacid_properties[aminoacid(codons[0])] == aminoacid_properties[aminoacid(codons[1])]:
                 property_res = 'similar'
             
+            print('properties:', property_res)
+
             rarities = []
             for item in ['AF', 'gnomADe_AF', '1000Gp3_AF']:
                 try:
                     rarities.append(float(row[item]))
-                except ValueError:
+                except ValueError as v:
+                    print(v)
                     continue
             
-            try:
-                rarity = max(rarities)
-            except ValueError:
-                rarity = '-'
+            print('rarities:',rarities)
+            if rarities == []:
+                rarity = 0.0
+            else:
+                rarity = format_float(max(rarities)*100)
             
-            print(rarities)
+            print('rarity:',rarity)
 
             tools = []
             tools.append('AM,' if 'likely_pathogenic' in row['am_class'] else '')
@@ -1254,16 +1270,28 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
                 tools.remove("")
 
             print(tools)
+            
+            print('strand:',row['STRAND'])
 
-            reportText.append(writeText(
+            true_ref = row["REF_ALLELE"]
+            true_alt = row["Allele"]
+            id_ref = row["REF_ALLELE"]
+            id_alt = row["Allele"]
+            if row['STRAND'] == -1:
+                print('strand reverse')
+                true_ref = alternate_strand_base[row["REF_ALLELE"]]
+                true_alt = alternate_strand_base[row["Allele"]]
+
+
+            return(writeText(
                     row['MANE_SELECT'], 
                     f'p.{amino_abbrev[aminoacid(codons[0])][0].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][0].capitalize()}', 
                     f'p.{amino_abbrev[aminoacid(codons[0])][1].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][1].capitalize()}', 
-                    f'c.{row["CDS_position"]}{row["REF_ALLELE"]}>{row["Allele"]}',
+                    f'c.{row["CDS_position"]}{true_ref}>{true_alt}',
                     row['EXON'].split('/')[0],
                     row['SYMBOL'], 
-                    row['REF_ALLELE'], 
-                    row['Allele'], 
+                    true_ref, 
+                    true_alt, 
                     row['CDS_position'], 
                     aminoacid(codons[0]), 
                     row['Protein_position'], 
@@ -1273,16 +1301,78 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
                     row['rs_dbSNP'],
                     rarity,
                     tools,
-                    pos
+                    pos,
+                    id_ref,
+                    id_alt
                 ))
         except Exception as e:
+            print('failed')
             print(e)
             continue
-        
+
+    return
+
+@app.route('/report_progress', methods=['GET'])
+def report_progress():
+    global report_progress_val
+    return jsonify({"progress": report_progress_val, "color": 'blue'})
+
+@app.route('/report/<string:chr>:<string:pos>:<string:ref>:<string:alt>')
+@app.route('/report')
+@app.route('/report/')
+def reportresult(chr='X', pos='X', ref='X', alt='X'):
+    if chr == 'X' and pos == 'X' and ref == 'X' and alt == 'X':
+        return render_template('report.html', reportText='', placeholder='chrX_XXXX_X/X')
+
+    reportText = [generateReport(chr, pos, ref, alt)]
+
     print(reportText)
-    if reportText == []:
+    if reportText == [None]:
         reportText = [('Error', 'Could not find complete vep output.')]
     return render_template('report.html', reportText=reportText, placeholder=f'chr{chr}_{pos}_{ref}/{alt}')
+
+@app.route('/report/fileupload', methods=['POST'])
+def reportfileupload():
+    global report_progress_val
+    report_progress_val = 0
+    if 'file' not in request.files:
+        return 'No file part'
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return 'No selected file'
+    
+    if not os.path.isdir('/usr/src/temp'):
+        os.mkdir('/usr/src/temp')
+
+    file_path = os.path.join('/usr/src/temp', 'reportlist.txt')
+    if file:
+        file.save(file_path)
+
+    variants = []
+    try:
+        for line in open(file_path):
+            if line:
+                chr, pos, ref_alt = line.strip().split('_')
+                ref, alt = ref_alt.split('/')
+                variants.append((chr, pos, ref, alt))
+    except:
+        return render_template('report.html', reportText=[('Error', 'Incorrect file format.')], placeholder=file.filename)
+    
+    reportText = []
+    for variant_index, variant in enumerate(variants):
+        report_progress_val = (variant_index+1)/len(variants)
+        variantreport = (generateReport(variant[0].replace('chr', ''), variant[1], variant[2], variant[3]))
+        if variantreport:
+            reportText.append(variantreport)
+        else:
+            reportText.append((f'Error on {variant[0]}_{variant[1]}_{variant[2]}/{variant[3]}', 'Could not find complete vep output.'))
+
+    if reportText == [None]:
+        reportText = [('Error', 'Could not find complete vep output.')]
+    
+    return render_template('report.html', reportText=reportText, placeholder=file.filename)
 
 @app.route('/frequency/<string:_chr>:<string:pos>:<string:ref>:<string:alt>')
 @app.route('/frequency/<string:_chr>')
@@ -1557,10 +1647,11 @@ def searchprogress():
 @app.route('/search/download')
 def search_download():
     print('in download')
+    filename = ''
     for file in os.listdir('./polarpipeline/resources/search'):
         if file.endswith('_search_result.tsv'):
-            filename = os.path.join('./polarpipeline/resources/search', file)
-    return send_file(filename, as_attachment=True)
+            return send_file(f'/usr/src/app/polarpipeline/resources/search/{file}', as_attachment=True)
+    return send_file(os.path.join(filename), as_attachment=True)
 
 @app.route('/searchcancelled', methods=['GET'])
 def searchcancelled():
