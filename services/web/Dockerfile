@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && apt-get install -y netcat perl make libdbi-perl libwww-perl libc6-dev cpanminus build-essential tabix
+RUN apt-get update && apt-get install -y netcat perl make libdbi-perl libwww-perl libc6-dev cpanminus build-essential tabix chromium
 RUN cpan install FindBin
 RUN cpan Math::CDF
 RUN cpan List::MoreUtils

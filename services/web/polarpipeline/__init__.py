@@ -2,11 +2,14 @@ import sys
 sys.path.append('/usr/src/app/polarpipeline')
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, send_from_directory
+from selenium.webdriver.chrome.options import Options
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, SubmitField
 from tasks import process, processT2T
 from flask_wtf import FlaskForm
+from selenium import webdriver
 from datetime import datetime
+from bs4 import BeautifulSoup
 from lib import update_db
 import urllib.parse
 import configparser
@@ -1038,20 +1041,35 @@ def clinvarText(clnsig, review, trait):
         return 'This variant is currently not curated in ClinVar.'
     return f'This variant is curated as {clnsig.replace("_", " ").lower()} in ClinVar for the following disease(s): {trait.replace("_", " ").replace("&", "; ")} ({review.replace("_", " ").replace("&", ", ")}).'
 
-def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos, id_ref, id_alt, clinvar_text):
+def writeFSText(var_id, mane, symbol, nucleotide_annotation, amino_notation, short_amino_notation, exon, num_fs, nucleotides, cds_pos, protein, alt_protein, protein_pos, rarity, chr, pos, dbsnp, clinvar):
+    rarity_text = f' occurs in less than {rarity}% of the population,\
+ which is consistent with disease.'
+ 
+    if rarity == 0.0:
+        rarity_text = f' is so rare that it is not catalogued in many common\
+ human population allele frequency databases, which is consistent with disease.'
+    
+    return (var_id, f'{mane}({symbol}):', f'The {short_amino_notation}fs*? variant (also known as {nucleotide_annotation}),\
+ located in coding exon {exon} of the {symbol} gene, results from a {num_fs} nucleotide ({nucleotides}) {"insertion" if "ins" in nucleotide_annotation else "deletion"} between positions {" and ".join(cds_pos.split("-"))}.\
+ The {protein} at codon {protein_pos} is replaced by {alt_protein}, followed by a frameshift that introduces a stop codon at position ?,\
+ terminating the protein prematurely. This alteration is predicted to be deleterious. The {short_amino_notation}fs*? variant {rarity_text} The {symbol} gene is located on Chromosome {chr}, and the\
+ variant is located at position {"{:,}".format(int(pos))} on the chromosome. The dbSNP identifier for this variant is {dbsnp}. {clinvar}\
+ ')
+
+def writeText(mane, amino_notation, short_amino_notation, nucleotide_annotation, exon, symbol, ref, alt, position, protein, codon, alt_protein, property_desc, chr, dbsnp, rarity, tools, pos, var_id, clinvar_text):
     rarity_text = f'The {short_amino_notation} variant occurs in less than {rarity}% of the population,\
- which is consistent with disease.\n\
- The {symbol} gene is located on Chromosome {chr}, and the variant is located at position {pos}\
- on the chromosome. The dbSNP identifier for this variant is\
- {dbsnp}.'
+ which is consistent with disease.'
+ 
     if rarity == 0.0:
         rarity_text = f'The {short_amino_notation} variant is so rare that it is not catalogued in many common\
  human population allele frequency databases, which is consistent with disease.'
     
-    return (f'chr{chr}_{pos}_{id_ref}/{id_alt}', f'{mane}({symbol}):{nucleotide_annotation}({amino_notation})',f'The {short_amino_notation} variant (also known as {nucleotide_annotation}), located\
+    return (f'{var_id}', f'{mane}({symbol}):{nucleotide_annotation}({amino_notation})',f'The {short_amino_notation} variant (also known as {nucleotide_annotation}), located\
  in coding exon {exon} of the {symbol} gene, results from a {ref} to {alt} substitution at nucleotide position\
  {position}. The {protein} at codon {codon} is replaced by {stopText(alt_protein, property_desc)} This alteration is predicted to be deleterious by\
- in silico analysis ({"".join(tools)[:-1]}).\n'+rarity_text+' '+clinvar_text)
+ in silico analysis ({"".join(tools)[:-1]}).\n'+rarity_text+f' The {symbol} gene is located on Chromosome {chr}, and the variant is located at position {"{:,}".format(int(pos))}\
+ on the chromosome. The dbSNP identifier for this variant is\
+ {dbsnp}. '+clinvar_text)
 
 def list_to_float(input):
     returnlist = []
@@ -1136,6 +1154,8 @@ def format_float(num):
 report_progress_val = 0
 
 def generateReport(chr, pos, ref, alt):
+    var_id = f'chr{chr}_{pos}_{ref}/{alt}'
+
     def skip_rows(line):
         return line < begin_index
 
@@ -1210,15 +1230,46 @@ def generateReport(chr, pos, ref, alt):
     for index, row in df.iterrows():
         print(row["Gene"])
         try:
-            codons = row['Codons'].strip().lower().split('/')
+            raw_codons = row['Codons'].strip().lower().split('/')
+            codons = []
+            for codon in raw_codons:
+                codons.append(codon[:3])
             print('codons:', codons)
             print('amino acid1:', aminoacid(codons[0]), '\taminoacid2:', aminoacid(codons[1]))
             property_res = 'differing'
             if aminoacid_properties[aminoacid(codons[0])] == aminoacid_properties[aminoacid(codons[1])]:
                 property_res = 'similar'
-            
-            print('properties:', property_res)
 
+            print('properties:', property_res)
+        except Exception as e:
+            print('CODON FAILURE')
+            print(e)
+            continue
+
+        # codons = []
+        # try:
+        #     raw_codons = row['Codons'].strip().lower().split('/')
+        #     for codon in raw_codons:
+        #         codons.append(codon[:3].lower())
+        #     property_res = 'differing'
+        #     if aminoacid_properties[aminoacid(codons[0])] == aminoacid_properties[aminoacid(codons[1])]:
+        #         property_res = 'similar'
+
+        # except:
+        #     try:
+        #         pattern = r'p\.[A-Za-z]{3}\d+[A-Za-z]{3}'
+        #         matches = re.findall(pattern, row['HGVSp'])
+        #         if matches:
+        #             print(matches[0])
+        #             matchNum = re.findall(r'\d+', matches[0])[0]
+        #             print(matches[0].replace('p.', '').split(matchNum))
+        #     except:
+        #         print('sad')
+
+            
+
+
+        try:
             rarities = []
             for item in ['AF', 'gnomADe_AF', '1000Gp3_AF']:
                 try:
@@ -1228,13 +1279,17 @@ def generateReport(chr, pos, ref, alt):
                     continue
             
             print('rarities:',rarities)
-            if rarities == []:
+            if rarities == [] or rarities == [0.0]:
                 rarity = 0.0
             else:
                 rarity = format_float(max(rarities)*100)
             
             print('rarity:',rarity)
-
+        except Exception as e:
+            print('RARITY ERROR')
+            print(e)
+            continue
+        try:
             tools = []
             tools.append('AM,' if 'likely_pathogenic' in row['am_class'] else '')
             tools.append('BA,' if 'D' in row['BayesDel_addAF_pred'] else '')
@@ -1277,49 +1332,535 @@ def generateReport(chr, pos, ref, alt):
                 tools.remove("")
 
             print(tools)
-            
+        except Exception as e:
+            print('TOOL ERROR')
+            print(e)
+            continue
+        snv = True
+        try:
             print('strand:',row['STRAND'])
 
             true_ref = row["REF_ALLELE"]
             true_alt = row["Allele"]
-            id_ref = row["REF_ALLELE"]
-            id_alt = row["Allele"]
-            if row['STRAND'] == -1:
+            if int(row['STRAND']) == int(-1):
                 print('strand reverse')
-                true_ref = alternate_strand_base[row["REF_ALLELE"]]
-                true_alt = alternate_strand_base[row["Allele"]]
-
-
-
-            return(writeText(
-                    row['MANE_SELECT'], 
-                    f'p.{amino_abbrev[aminoacid(codons[0])][0].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][0].capitalize()}', 
-                    f'p.{amino_abbrev[aminoacid(codons[0])][1].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][1].capitalize()}', 
-                    f'c.{row["CDS_position"]}{true_ref}>{true_alt}',
-                    row['EXON'].split('/')[0],
-                    row['SYMBOL'], 
-                    true_ref, 
-                    true_alt, 
-                    row['CDS_position'], 
-                    aminoacid(codons[0]), 
-                    row['Protein_position'], 
-                    aminoacid(codons[-1]),
-                    property_res,
-                    row['chr'],
-                    row['rs_dbSNP'],
-                    rarity,
-                    tools,
-                    pos,
-                    id_ref,
-                    id_alt,
-                    clinvarText(row['clinvar_clnsig'], row['clinvar_review'], row['clinvar_trait'])
-                ))
+                print(row["REF_ALLELE"])
+                print(row['Allele'])
+                true_ref = ''.join([alternate_strand_base[x] for x in row["REF_ALLELE"] if not x == '-'])[::-1] # alternate_strand_base[row["REF_ALLELE"]]
+                true_alt = ''.join([alternate_strand_base[x] for x in row["Allele"] if not x == '-'])[::-1] # alternate_strand_base[row["Allele"]]
+            if '' in [true_ref, true_alt]:
+                snv = False
         except Exception as e:
-            print('failed')
+            print('REF/ALT ERROR')
             print(e)
             continue
+        if snv:
+            try:
+                return (writeText(
+                        row['MANE_SELECT'], 
+                        f'p.{amino_abbrev[aminoacid(codons[0])][0].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][0].capitalize()}', 
+                        f'p.{amino_abbrev[aminoacid(codons[0])][1].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][1].capitalize()}', 
+                        f'c.{row["CDS_position"]}{true_ref}>{true_alt}',
+                        row['EXON'].split('/')[0],
+                        row['SYMBOL'], 
+                        true_ref, 
+                        true_alt, 
+                        row['CDS_position'], 
+                        aminoacid(codons[0]), 
+                        row['Protein_position'], 
+                        aminoacid(codons[-1]),
+                        property_res,
+                        chr,
+                        row['rs_dbSNP'],
+                        rarity,
+                        tools,
+                        pos,
+                        var_id,
+                        clinvarText(row['clinvar_clnsig'], row['clinvar_review'], row['clinvar_trait'])
+                    ))
+            except Exception as e:
+                print('FINAL TEXT ERROR')
+                print(e)
+                continue
+        else:
+            # try:
+            #     url = f'https://www.ncbi.nlm.nih.gov/nuccore/{row["MANE_SELECT"]}'
+            #     print(url)
+            #     chrome_options = Options()
+            #     chrome_options.add_argument('--no-sandbox')
+            #     chrome_options.add_argument("--headless")
+            #     driver = webdriver.Chrome(options=chrome_options, )
+            #     driver.get(url)
+            #     attempts = 10
+            #     while attempts >= 0:
+            #         html_content = driver.page_source
+            #         soup = BeautifulSoup(html_content, "html.parser")
+            #         ff_line_elements = soup.find_all(class_="ff_line")
+            #         if ff_line_elements and ff_line_elements[0]:
+            #             time.sleep(1)
+            #             html_content = driver.page_source
+            #             break
+            #         time.sleep(1)
+            #         attempts+=1
+            #     driver.quit()
+            #     gene_sequence = ''
+            #     for line in ff_line_elements:
+            #         gene_sequence += line.get_text().replace(' ', '')
+            #     # print(gene_sequence)
+            #     exon_button = soup.find(id=f"feature_{row['MANE_SELECT']}_exon_")
+            #     script_text = exon_button.find('script').string
+            #     range_match = re.search(r'oData\[oData.length - 1\].features\["exon"\].push\(\[\[(\d+), (\d+)\]\]', script_text)
+            #     if range_match:
+            #         start_pos = int(range_match.group(1))
+            #         end_pos = int(range_match.group(2))
+            #         exon_sequence = str(gene_sequence)[start_pos-1:end_pos]
+            #         print(exon_sequence)
+            #         # print(exon_sequence[0]+true_alt+exon_sequence[1:])
+            #     else:
+            #         print("Range not found")
+            # except Exception as e:
+            #     print('FRAMESHIFT PROCESSING ERROR')
+            #     print(e)
+            #     continue
+            try:
+                return (writeFSText(
+                    var_id,
+                    row['MANE_SELECT'],
+                    row['SYMBOL'],
+                    f'c.{"_".join(row["CDS_position"].split("-"))}{"ins" if row["VARIANT_CLASS"] == "insertion" else "del"}{true_ref if true_alt == "-" else true_alt}',
+                    f'p.{amino_abbrev[aminoacid(codons[0])][0].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][0].capitalize()}',
+                    f'p.{amino_abbrev[aminoacid(codons[0])][1].capitalize()}{row["Protein_position"]}{amino_abbrev[aminoacid(codons[1])][1].capitalize()}',
+                    f'{row["EXON"].split("/")[0]}',
+                    f'{"single" if max(len(true_ref), len(true_alt)) == 1 else max(len(true_ref), len(true_alt))}',
+                    f'{true_alt if true_alt else true_ref}',
+                    f'{row["CDS_position"]}',
+                    f'{aminoacid(codons[0])}',
+                    f'{aminoacid(codons[1])}',
+                    f'{row["Protein_position"]}',
+                    rarity, 
+                    chr, 
+                    pos, 
+                    f'{row["rs_dbSNP"]}',
+                    clinvarText(row['clinvar_clnsig'], row['clinvar_review'], row['clinvar_trait'])
+                ))
+            except Exception as e:
+                print('FRAMESHIFT FINAL TEXT ERROR')
+                print(e)
+                continue
 
     return
+
+# aminoacid_properties = {
+#     'alanine': 'hydrophobic',
+#     'arginine': 'positive',
+#     'asparagine': 'polar_uncharged',
+#     'aspartate': 'negative',
+#     'cysteine': 'special_3',
+#     'glutamate': 'negative',
+#     'glutamine': 'polar_uncharged',
+#     'glycine': 'hydrophobic',
+#     'histidine': 'positive',
+#     'isoleucine': 'hydrophobic',
+#     'leucine': 'hydrophobic',
+#     'lysine': 'positive',
+#     'methionine': 'hydrophobic',
+#     'phenylalanine': 'hydrophobic_aromatic',
+#     'proline': 'special_2',
+#     'serine': 'polar_uncharged',
+#     'threonine': 'polar_uncharged',
+#     'tryptophan': 'hydrophobic_aromatic',
+#     'tyrosine': 'special_4',
+#     'valine': 'hydrophobic',
+#     'stop': 'stop'
+# }
+# amino_abbrev = {
+#     'alanine':('ala','A'),
+#     'arginine':('arg','R'),
+#     'asparagine':('asn','N'),
+#     'aspartate':('asp','D'),
+#     'cysteine':('cys','C'),
+#     'glutamate':('glu','E'),
+#     'glutamine':('gln','Q'),
+#     'glycine':('gly','G'),
+#     'histidine':('his','H'),
+#     'isoleucine':('ile','I'),
+#     'leucine':('leu','L'),
+#     'lysine':('lys','K'),
+#     'methionine':('met','M'),
+#     'phenylalanine':('phe','F'),
+#     'proline':('pro','P'),
+#     'serine':('ser','S'),
+#     'threonine':('thr','T'),
+#     'tryptophan':('trp','W'),
+#     'tyrosine':('tyr','Y'),
+#     'valine':('val','V'),
+#     'stop':('ter','X')
+# }
+# alternate_strand_base = {
+#     'G':'C',
+#     'C':'G',
+#     'A':'T',
+#     'T':'A',
+#     '-':'-'
+# }
+
+# def vep(input_snv, reference_path, threads='30'):
+#     print(os.listdir('/root/'))
+#     start = f'/usr/src/app/vep/ensembl-vep/vep --offline --cache --tab --everything --assembly GRCh38 --fasta {reference_path} --fork {threads} --buffer_size 120000'
+#     params = [
+#         ' --sift b',
+#         ' --polyphen b',
+#         ' --ccds',
+#         ' --hgvs',
+#         ' --symbol',
+#         ' --numbers',
+#         ' --domains',
+#         ' --regulatory',
+#         ' --canonical',
+#         ' --protein',
+#         ' --biotype',
+#         ' --af',
+#         ' --af_1kg',
+#         ' --af_gnomade',
+#         ' --af_gnomadg',
+#         ' --max_af',
+#         ' --pubmed',
+#         ' --uniprot',
+#         ' --mane',
+#         ' --tsl',
+#         ' --appris',
+#         ' --variant_class',
+#         ' --gene_phenotype',
+#         ' --mirna',
+#         ' --per_gene',
+#         ' --show_ref_allele',
+#         ' --force_overwrite'
+#     ]
+#     plugins = [
+#         f' --plugin LoFtool,/usr/src/app/vep/vep-resources/LoFtool_scores.txt',
+#         f' --plugin Mastermind,/usr/src/app/vep/vep-resources/mastermind_cited_variants_reference-2023.04.02-grch38.vcf.gz',
+#         f' --plugin CADD,/usr/src/app/vep/vep-resources/whole_genome_SNVs.tsv.gz',
+#         f' --plugin Carol',
+#         f' --plugin Condel,/home/threadripper/.vep/Plugins/config/Condel/config',
+#         f' --plugin pLI,/usr/src/app/vep/vep-resources/pLI_values.txt',
+#         f' --plugin PrimateAI,/usr/src/app/vep/vep-resources/PrimateAI_scores_v0.2_GRCh38_sorted.tsv.bgz',
+#         f' --plugin dbNSFP,/usr/src/app/vep/vep-resources/dbNSFP4.4a_grch38.gz,ALL',
+#         f' --plugin REVEL,/usr/src/app/vep/vep-resources/new_tabbed_revel_grch38.tsv.gz',
+#         f' --plugin AlphaMissense,file=/usr/src/app/vep/vep-resources/AlphaMissense_hg38.tsv.gz',
+#         f' --plugin EVE,file=/usr/src/app/vep/vep-resources/eve_merged.vcf.gz',
+#         f' --plugin DisGeNET,file=/usr/src/app/vep/vep-resources/all_variant_disease_pmid_associations_final.tsv.gz'
+#     ]
+    
+#     plugin_str = ''.join(plugins)
+    
+#     commandInputSNV = f' -i {input_snv}'
+#     commandOutputSNV = ' -o ' + '/usr/src/app/vep/report_output.txt'
+#     command = start + ''.join(params) + plugin_str + commandInputSNV + commandOutputSNV
+#     os.system(command)
+
+# def list_to_float(input):
+#     returnlist = []
+#     for item in input:
+#         try:
+#             returnlist.append(float(item))
+#         except:
+#             continue
+#     if returnlist == []:
+#         return [0]
+#     return returnlist
+
+# def stopText(alt_protein, property_desc):
+#     if alt_protein == 'stop':
+#         return 'a premature stop codon.'
+#     return f'{alt_protein}, an amino acid with {property_desc} properties.'
+
+# def clinvarText(clnsig, review, trait):
+#     if clnsig == '-':
+#         return 'This variant is currently not curated in ClinVar.'
+#     return f'This variant is curated as {clnsig.replace("_", " ").lower()} in ClinVar for the following disease(s): {trait.replace("_", " ").replace("&", "; ")} ({review.replace("_", " ").replace("&", ", ")}).'
+
+# def round_to_nonzero(num):
+#     return round(num, -int(np.floor(np.log10(abs(num)))))
+# def format_float(num):
+#     rounded_num = round_to_nonzero(num)
+#     return np.format_float_positional(rounded_num, trim='-')
+
+# def rarityText(rarity):
+#     if rarity == 0.0:
+#         return f' is so rare that it is not catalogued in many common human population allele frequency databases, which is consistent with disease.'
+#     return f' occurs in less than {format_float(rarity*100)}% of the population, which is consistent with disease.'
+
+# def writeText(chrom, pos, protein_pos, nm_id, c_id, p_id, aka_p_id, symbol, og_protein, new_protein, description, coding_exon, effect, tools_text, rarity_text, dbsnp_text, clinvar_text):
+#     return (f"{nm_id}({symbol}){c_id}{p_id}",f"The {c_id} variant{aka_p_id}, located in coding exon {coding_exon} of the {symbol} gene, results from a{effect}.\
+#             The {og_protein} at codon {protein_pos} is replaced by {new_protein}, {description}. This alteration is predicted to be deleterious{tools_text}. The {c_id} variant {rarity_text}\
+#             The {symbol} gene is located on chromosome {chrom}, and the variant is located at position {pos} on the chromosome. {dbsnp_text}{clinvar_text}")
+
+# def generateReport(chr, pos, ref, alt):
+#     global aminoacid_properties
+#     global amino_abbrev
+#     global alternate_strand_base
+
+#     var_id = f'chr{chr}_{pos}_{ref}/{alt}'
+
+#     def skip_rows(line):
+#         return line < begin_index
+
+#     print(chr, pos, ref, alt)
+#     with open('/usr/src/app/vep/report_input.txt','w') as opened:
+#         opened.write(f'chr{chr}\t{pos}\t.\t{ref}\t{alt}')
+#     vep('/usr/src/app/vep/report_input.txt', '/usr/src/app/vep/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta')
+
+#     begin_index = 0
+#     for line in open('/usr/src/app/vep/report_output.txt', 'r'):
+#         if line.startswith('##'):
+#             begin_index+=1
+#             continue
+#         if line.startswith('#'):
+#             break
+    
+#     alternate_futures = []
+
+#     df = pd.read_csv('/usr/src/app/vep/report_output.txt', sep='\t', header=0, skiprows=skip_rows)
+#     for index, row in df.iterrows():
+#         score = 0
+#         print(row["Gene"])
+
+#         true_ref = ''.join([alternate_strand_base[x] for x in row["REF_ALLELE"] if not x == '-'])[::-1]
+#         true_alt = ''.join([alternate_strand_base[x] for x in row["Allele"] if not x == '-'])[::-1]
+#         variant_type = ''
+#         variant_comparison = len(true_ref)-len(true_alt)
+#         if variant_comparison > 0:
+#             variant_type = 'deletion'
+#         elif variant_comparison < 0:
+#             variant_type = 'insertion'
+#         else:
+#             variant_type = 'single'
+
+#         try:
+#             protein_pos = row['Protein_position']
+#             score += 1
+#         except Exception as e:
+#             print('PROTEIN_POS ERROR')
+#             print(e)
+#             protein_pos = '[PROTEIN_POSITION]'
+        
+#         try:
+#             nm_id = row['MANE_SELECT']
+#             score += 1
+#         except Exception as e:
+#             print('NM_ID ERROR')
+#             print(e)
+#             nm_id = '[NM_ID]'
+        
+#         try:
+#             c_id = row['HGVSc'].split(':')[1]
+#             score += 1
+#         except Exception as e:
+#             print('HGVSc ID ERROR')
+#             print(e)
+#             c_id = '[HGVSc ID]'
+        
+#         try:
+#             p_id = row['HGVSp'].split(':')[1]
+#             score += 1
+#         except Exception as e:
+#             print('HGVSp ID ERROR')
+#             print(e)
+#             p_id = '[HGVSp ID]'
+
+#         try:
+#             aka_p_id = 'test'
+#             score += 1
+#         except Exception as e:
+#             print('SHORT_PID ERROR')
+#             print(e)
+#             aka_p_id = 'test'
+
+#         try:
+#             symbol = row['SYMBOL']
+#             score += 1
+#         except Exception as e:
+#             print('SYMBOL ERROR')
+#             print(e)
+#             symbol = '[SYMBOL]'
+
+#         try:
+#             og_protein = 'og_protein'
+#             score += 1
+#         except Exception as e:
+#             print('ORIGINAL_PROTEIN ERROR')
+#             print(e)
+#             og_protein = '[ORIGINAL_PROTEIN]'
+
+#         try:
+#             new_protein = 'new_protein'
+#             score += 1
+#         except Exception as e:
+#             print('NEW_PROTEIN ERROR')
+#             print(e)
+#             new_protein = '[NEW_PROTEIN]'
+        
+#         try:
+#             description = 'followed by or an amino acid with property'
+#             score += 1
+#         except Exception as e:
+#             print('ALTERATION DESC ERROR')
+#             print(e)
+#             description = '[ALTERATION DESC]'
+        
+#         try:
+#             coding_exon = row['EXON'].split('/')[0]
+#             score += 1
+#         except Exception as e:
+#             print('CODING EXON ERROR')
+#             print(e)
+#             coding_exon = '[CODING EXON]'
+        
+#         try:
+#             match variant_type:
+#                 case 'single':
+#                     effect = f' {true_ref} to {true_alt} substitution'
+#                 case 'insertion':
+#                     match len(true_alt):
+#                         case 1:
+#                             cds_start, cds_stop = row['CDS_position'].split('-')
+#                             effect = f" single nucleotide ({true_alt}) insertion between positions {cds_start} and {cds_stop}"
+#                         case default:
+#                             cds_start, cds_stop = row['CDS_position'].split('-')
+#                             effect = f"n insertion ({true_alt}) between positions {cds_start} and {cds_stop}"
+#                 case 'deletion':
+#                     match len(true_alt):
+#                         case 1:
+#                             cds_start, cds_stop = row['CDS_position'].split('-')
+#                             effect = f" single nucleotide ({true_alt}) deletion at position {cds_start}"
+#             score += 1
+#         except Exception as e:
+#             print('EFFECT DESC ERROR')
+#             print(e)
+#             effect = '[EFFECT DESC]'
+        
+#         try:
+#             rarities = []
+#             for item in ['AF', 'gnomADe_AF', '1000Gp3_AF']:
+#                 try:
+#                     rarities.append(float(row[item]))
+#                 except ValueError as v:
+#                     print(v)
+#                     continue
+#             if rarities == []:
+#                 rarity = 0.0
+#             else:
+#                 rarity = max(rarities)
+#             rarity_text = rarityText(rarity)
+#             score += 1
+#         except Exception as e:
+#             print('RARITY TEXT ERROR')
+#             print(e)
+#             rarity_text = '[RARITY TEXT]'
+        
+#         try:
+#             dbsnp_text = f"The dbSNP identifier for this variant is {row['rs_dbSNP']}. "
+#             if row['rs_dbSNP'] == '-':
+#                 dbsnp_text = "There is currently no dbSNP identifier for this variant. "
+#             score += 1
+#         except Exception as e:
+#             print('DNSNP RS ERROR')
+#             print(e)
+#             dbsnp_text = '[DNSNP RS]'
+
+#         try:
+#             clinvar_text = clinvarText(row['clinvar_clnsig'], row['clinvar_review'], row['clinvar_trait'])
+#             score += 1
+#         except Exception as e:
+#             print('CLINVAR TEXT ERROR')
+#             print(e)
+#             clinvar_text = '[CLINVAR TEXT]'
+
+#         try:
+#             tools = []
+#             tools.append('AM,' if 'likely_pathogenic' in row['am_class'] else '')
+#             tools.append('BA,' if 'D' in row['BayesDel_addAF_pred'] else '')
+#             tools.append('BN,' if 'D' in row['BayesDel_noAF_pred'] else '')
+#             tools.append('CD,' if row['CADD_PHRED'] != '-' and float(row['CADD_PHRED']) >= 20 else '')
+#             tools.append('CL,' if 'deleterious' in row['Condel'] else '')
+#             tools.append('CP,' if 'D' in row['ClinPred_pred'] else '')
+#             tools.append('CR,' if 'Deleterious' in row['CAROL'] else '')
+#             tools.append('CS,' if 'likely_pathogenic' in row['CLIN_SIG'] else '')
+#             tools.append('CV,' if 'Pathogenic' in row['clinvar_clnsig'] else '')
+#             tools.append('DG,' if 'D' in row['DEOGEN2_pred'] else '')
+#             tools.append('DN,' if row['DANN_score'] != '-' and float(row['DANN_score']) >= 0.96 else '')
+#             tools.append('EV,' if 'Pathogenic' in row['EVE_CLASS'] else '')
+#             tools.append('FK,' if 'D' in row['fathmm-MKL_coding_pred'] else '')
+#             tools.append('FM,' if 'D' in row['FATHMM_pred'] else '')
+#             tools.append('FX,' if 'D' in row['fathmm-XF_coding_pred'] else '')
+#             tools.append('IM,' if 'HIGH' in row['IMPACT'] else '')
+#             tools.append('LR,' if 'D' in row['LRT_pred'] else '')
+#             tools.append('LS,' if 'D' in row['LIST-S2_pred'] else '')
+#             tools.append('MA,' if 'H' in row['MutationAssessor_pred'] else '')
+#             tools.append('MC,' if 'D' in row['M-CAP_pred'] else '')
+#             tools.append('ML,' if 'D' in row['MetaLR_pred'] else '')
+#             tools.append('MP,' if row['MPC_score'] != '-' and max(list_to_float(str(row['MPC_score']).split(','))) > 0.5  else '')
+#             tools.append('MR,' if 'D' in row['MetaRNN_pred'] else '')
+#             tools.append('MS,' if 'D' in row['MetaSVM_pred'] else '')
+#             tools.append('MT,' if 'D' in row['MutationTaster_pred'] else '')
+#             tools.append('MV,' if row['MVP_score'] != '-' and max(list_to_float(str(row['MVP_score']).split(','))) > 0.7  else '')
+#             tools.append('PA,' if 'D' in row['PrimateAI_pred'] else '')
+#             tools.append('PD,' if 'D' in row['Polyphen2_HDIV_pred'] else '')
+#             tools.append('PP,' if 'probably_damaging' in row['PolyPhen'] else '')
+#             tools.append('PR,' if 'D' in row['PROVEAN_pred'] else '')
+#             tools.append('PV,' if 'D' in row['Polyphen2_HVAR_pred'] else '')
+#             tools.append('RV,' if row['REVEL'] != '-' and float(row['REVEL']) > 0.75  else '')
+#             tools.append('SF,' if 'deleterious' in row['SIFT'] else '')
+#             tools.append('S4,' if 'D' in row['SIFT4G_pred'] else '')
+#             tools.append('V4,' if row['VEST4_score'] != '-' and max(list_to_float(str(row['VEST4_score']).split(','))) > 0.5  else '')
+#             # num_tools = int(len(''.join(tools).replace(',',''))/2)
+
+#             while("" in tools):
+#                 tools.remove("")
+#             print(tools)
+#             if tools:
+#                 tools_text = f" by in silico analysis({''.join(tools)})"
+#             else:
+#                 tools_text = "."
+#             score += 1
+#         except Exception as e:
+#             print('TOOL ERROR')
+#             print(e)
+#             tools_text = "[TOOLS TEXT]"
+#             continue
+
+#         header, body = writeText(
+#             chr,
+#             "{:,}".format(int(pos)),
+#             protein_pos,
+#             nm_id,
+#             c_id,
+#             p_id,
+#             aka_p_id,
+#             symbol,
+#             og_protein,
+#             new_protein,
+#             description,
+#             coding_exon,
+#             effect,
+#             tools_text,
+#             rarity_text,
+#             dbsnp_text,
+#             clinvar_text
+#             )
+
+#         alternate_futures.append((score, (f'chr{chr}_{pos}_{ref}/{alt}', header, body)))
+    
+#     max_line = ('Error', "Could not retrieve vep output.")
+#     max_score = 0
+#     for future in alternate_futures:
+#         if future[0] > max_score:
+#             max_score = future[0]
+#             max_line = future[1]
+        
+#     return max_line
+
+
 
 @app.route('/report_progress', methods=['GET'])
 def report_progress():
@@ -1334,6 +1875,8 @@ def reportresult(chr='X', pos='X', ref='X', alt='X'):
         return render_template('report.html', reportText='', placeholder='chrX_XXXX_X/X')
 
     reportText = [generateReport(chr, pos, ref, alt)]
+
+
 
     print(reportText)
     if reportText == [None]:
@@ -1376,7 +1919,7 @@ def reportfileupload():
         if variantreport:
             reportText.append(variantreport)
         else:
-            reportText.append((f'Error on {variant[0]}_{variant[1]}_{variant[2]}/{variant[3]}', 'Could not find complete vep output.'))
+            reportText.append((f'{variant[0]}_{variant[1]}_{variant[2]}/{variant[3]}', 'Could not find complete vep output.'))
 
     if reportText == [None]:
         reportText = [('Error', 'Could not find complete vep output.')]
