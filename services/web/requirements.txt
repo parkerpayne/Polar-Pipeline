@@ -18,6 +18,8 @@ prompt-toolkit==3.0.39
 pandas==2.2.0
 selenium==4.19.0
 psycopg2-binary==2.9.9
+pyfaidx==0.8.1.1
+pyhgvsv==0.1.1
 python-dateutil==2.8.2
 six==1.16.0
 soupsieve==2.5

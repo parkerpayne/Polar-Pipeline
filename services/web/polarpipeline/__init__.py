@@ -11,14 +11,18 @@ from selenium import webdriver
 from datetime import datetime
 from bs4 import BeautifulSoup
 from lib import update_db
+from pyfaidx import Fasta
 import urllib.parse
 import configparser
 import pandas as pd
 import numpy as np
 import subprocess
 import psycopg2
+import pyhgvsv
+import pyhgvsv.utils as pu
 import hashlib
 import time
+import json
 import svg
 import ast
 import os
@@ -205,8 +209,39 @@ def dashboard():
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
         
-        cursor. execute("SELECT file_name, status, id FROM progress ORDER BY start_time")
+        cursor.execute("SELECT file_name, status, id FROM progress ORDER BY start_time")
         rows = cursor.fetchall()
+
+        cursor.execute("SELECT computer, AVG(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600) AS avg_runtime_seconds FROM progress WHERE status = 'complete' GROUP BY computer;")
+        timings = cursor.fetchall()
+        formatted_timings = [{
+            'computer': row[0],
+            'runtime': row[1]
+        } for row in timings]
+        formatted_data_json = json.dumps(formatted_timings)
+
+        cursor.execute("SELECT reference, COUNT(*) AS instances FROM progress WHERE status = 'complete' GROUP BY reference;")
+        reference_counts = cursor.fetchall()
+        formatted_references = [{
+            'reference': row[0],
+            'count': row[1]
+        } for row in reference_counts]
+        formatted_reference_counts = json.dumps(formatted_references)
+
+        cursor.execute("""
+            SELECT computer, reference, AVG(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600) AS avg_runtime_hours 
+            FROM progress 
+            WHERE status = 'complete' 
+            GROUP BY computer, reference
+        """)
+        ref_timings = cursor.fetchall()
+        ref_formatted_timings = [{
+            'computer': row[0],
+            'reference': row[1],
+            'runtime': row[2]
+        } for row in ref_timings]
+        ref_formatted_data_json = json.dumps(ref_formatted_timings)
+        print(ref_formatted_data_json)
 
         cursor.execute("SELECT * FROM status;")
         statusList = cursor.fetchall()
@@ -218,9 +253,22 @@ def dashboard():
         conn.close()
 
 
-        return render_template('dashboard.html', rows = rows, status=status)
+        return render_template('dashboard.html', rows = rows, status=status, formatted_data=formatted_data_json, reference_counts=formatted_reference_counts, ref_timings=ref_formatted_data_json)
         # return render_template('dashboard.html', rows = rows)
     except Exception as e:
+        return f"Error: {e}"
+
+@app.route('/clear_queue')
+def clear_queue():
+    try:
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM progress WHERE status = %s", ('waiting',))
+        conn.commit()
+        return redirect(url_for('dashboard'))
+    except Exception as e:
+        cursor.rollback()
         return f"Error: {e}"
     
 @app.route('/deleteRun/<string:id>')
@@ -455,7 +503,7 @@ def generatefigure():
     homobar = []
     homofeatureelements = []
 
-    base = [
+    bg = [
         svg.Rect( # BACKGROUND
             fill="white",
             x=0,
@@ -474,6 +522,8 @@ def generatefigure():
             font_stretch="ultra-condensed"
         ),
     ]
+
+    base = []
 
     if not homo:
         leftlen = request.json.get("leftlen")
@@ -607,7 +657,7 @@ def generatefigure():
                     stroke_width=3,
                     stroke="red",
                     x1=50+((int(item[1])/maxlen) * 550),
-                    y1=185,
+                    y1=200,
                     x2=50+((int(item[1])/maxlen) * 550),
                     y2=155-item[2]
                 )
@@ -636,7 +686,7 @@ def generatefigure():
                     stroke_width=3,
                     stroke="red",
                     x1=50+((int(item[1])/maxlen) * 550),
-                    y1=345,
+                    y1=360,
                     x2=50+((int(item[1])/maxlen) * 550),
                     y2=315-item[2]
                 )
@@ -707,34 +757,34 @@ def generatefigure():
                     font_size=fontsize
                 )
             )
-            homofeaturestemp = sorted([x for x in homofeatures if x], key=customsortfeatures)
-            homofeatureswithoverlap = []
-            for i in range(len(homofeaturestemp)):
-                height = 0
-                if '^' in homofeaturestemp[i][0]:
-                    height = (len(homofeaturestemp[i][0].split('^'))-1)*30
-                homofeatureswithoverlap.append(homofeaturestemp[i]+[height])
-                print(homofeatureswithoverlap)
-            for item in homofeatureswithoverlap:
-                homofeatureelements.append(
-                    svg.Line(
-                        stroke_width=3,
-                        stroke="red",
-                        x1=50+((int(item[1])/int(homolen)) * 550),
-                        y1=265,
-                        x2=50+((int(item[1])/int(homolen)) * 550),
-                        y2=235-item[2]
-                    )
+        homofeaturestemp = sorted([x for x in homofeatures if x], key=customsortfeatures)
+        homofeatureswithoverlap = []
+        for i in range(len(homofeaturestemp)):
+            height = 0
+            if '^' in homofeaturestemp[i][0]:
+                height = (len(homofeaturestemp[i][0].split('^'))-1)*30
+            homofeatureswithoverlap.append(homofeaturestemp[i]+[height])
+            print(homofeatureswithoverlap)
+        for item in homofeatureswithoverlap:
+            homofeatureelements.append(
+                svg.Line(
+                    stroke_width=3,
+                    stroke="red",
+                    x1=50+((int(item[1])/int(homolen)) * 550),
+                    y1=280,
+                    x2=50+((int(item[1])/int(homolen)) * 550),
+                    y2=235-item[2]
                 )
-                homofeatureelements.append(
-                    svg.Text(
-                        text=item[0],
-                        x=50 + ((int(item[1]) / int(homolen)) * 550) + 6,
-                        y=250-item[2],
-                        font_family="monospace",
-                        font_size=20
-                    )
+            )
+            homofeatureelements.append(
+                svg.Text(
+                    text=item[0],
+                    x=50 + ((int(item[1]) / int(homolen)) * 550) + 6,
+                    y=250-item[2],
+                    font_family="monospace",
+                    font_size=20
                 )
+            )
 
         # print(homolen)
         # print(homostructures)
@@ -743,7 +793,7 @@ def generatefigure():
     canvas = svg.SVG(
         width=480*2,
         height=480,
-        elements = base + topbar + bottombar + homobar + leftfeatureelements + rightfeatureelements + homofeatureelements
+        elements = bg + leftfeatureelements + rightfeatureelements + homofeatureelements + base + topbar + bottombar + homobar
     )
 
     svg_string = str(canvas)
@@ -1967,6 +2017,78 @@ def reportfileupload():
     
     return render_template('report.html', reportText=reportText, placeholder=file.filename)
 
+genome = Fasta('/usr/src/app/vep/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta')
+with open('/usr/src/app/vep/hg38.refGene') as infile:
+    transcripts = pu.read_transcripts(infile)
+
+
+@app.route('/extractsniffles', methods=['POST'])
+def extractsniffles():
+    global genome
+    global transcripts
+    data = request.get_json()
+    
+    # Extract the variables from the JSON data
+    filepath = data.get('path')
+    sniffles = data.get('id')
+
+    hgvs = 'error'
+
+    cols = {}
+    header = True
+    for line in open(filepath):
+        variant = line.strip().split('\t')
+        if header:
+            header = False
+            for index, col in enumerate(variant):
+                cols[col] = index
+            continue
+        if variant[cols['#Uploaded_variation']] == sniffles:
+            chrom = variant[cols['#CHROM']]
+            pos = int(variant[cols['POS']])
+            ref = variant[cols['REF']].replace('N', '')
+            alt = variant[cols['ALT']].replace('<DEL>', '').replace('<DUP>', '').replace('<INS>', '').replace('<INV>', '')
+            if len(alt) > 0 and alt[0] in ['[', ']']:
+                alt = ''
+            svlen = variant[cols['SVLEN']]
+            try:
+                svlen = int(svlen)
+            except:
+                svlen = 0
+            mane = variant[cols['MANE_SELECT']]
+            if mane == '-':
+                hgvs = 'no transcript ID'
+            else:
+                hgvs = pyhgvsv.format_hgvs_name(chrom, pos, ref, alt, genome, transcripts[mane], sv_length=svlen)
+
+            break
+
+
+    return jsonify(hgvs)
+
+@app.route('/svreport/<path:path>')
+@app.route('/svreport')
+def reportbrowse(path=None):
+    if path is None or not path.startswith('mnt'):
+        path = base_path
+
+    full_path = os.path.join('/', path)
+    directory_listing = {}
+    for item in os.listdir(full_path):
+        is_dir = False
+        if os.path.isdir(os.path.join(full_path, item)):
+            is_dir = True
+        directory_listing[item] = is_dir
+    up_level_path = os.path.dirname(path)
+    
+    ordered_directory = sorted(os.listdir(full_path), key=alphabetize)
+
+    return render_template('reportsvbrowse.html', current_path=full_path, directory_listing=directory_listing, ordered_directory=ordered_directory, up_level_path=up_level_path)
+
+@app.route('/svreportresult')
+def svreportresult():
+    return jsonify('hi')
+
 @app.route('/frequency/<string:_chr>:<string:pos>:<string:ref>:<string:alt>')
 @app.route('/frequency/<string:_chr>')
 @app.route('/frequency')
@@ -2491,8 +2613,9 @@ def filesearchpreview():
 @app.route('/filesearch/download')
 def filesearchdownload():
     print('in download')
+    directory = '/usr/src/app/polarpipeline/resources/search'
     filename=''
-    for file in os.listdir():
+    for file in os.listdir('/usr/src/app/polarpipeline/resources/search'):
         if file.endswith('_filesearch_result.tsv'):
-            filename = file
+            filename = os.path.join(directory, file)
     return send_file(filename, as_attachment=True)

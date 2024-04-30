@@ -74,12 +74,8 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
-                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                        <a class="nav-link" href="{{ url_for('reportresult') }}">SNV Report</a>
-                        <a class="nav-link" href="{{url_for('reportbrowse') }}">SV Report</a>
-                    </div>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reportresult') }}"><b>Report</b></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
