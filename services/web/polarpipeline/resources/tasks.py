@@ -9,7 +9,11 @@ import configparser
 import subprocess
 from datetime import datetime
 
-app = Celery('tasks', broker='pyamqp://guest:guest@10.21.5.24:5672/')
+setup_parser = configparser.ConfigParser()
+setup_parser.read('variables.config')
+ip = setup_parser['network']['host_ip']
+
+app = Celery('tasks', broker=f'pyamqp://guest:guest@{ip}:5672/')
 
 @app.task
 def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):

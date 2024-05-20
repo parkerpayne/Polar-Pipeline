@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 from selenium.webdriver.chrome.options import Options
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, SubmitField
+from flask_socketio import SocketIO, emit
 from tasks import process, processT2T
 from flask_wtf import FlaskForm
 from selenium import webdriver
@@ -17,6 +18,7 @@ import configparser
 import pandas as pd
 import numpy as np
 import subprocess
+import threading
 import psycopg2
 import pyhgvsv
 import pyhgvsv.utils as pu
@@ -31,6 +33,7 @@ import re
 
 app = Flask(__name__)
 app.config.from_object("polarpipeline.config.Config")
+socketio = SocketIO(app)
 db = SQLAlchemy(app)
 
 class User(db.Model):
@@ -204,13 +207,17 @@ def remove(removepath):
     return redirect(url_for('configuration'))
 
 @app.route('/dashboard')
-def dashboard():
+@app.route('/dashboard/')
+@app.route('/dashboard/<int:page>')
+def dashboard(page=0):
     try:
+        if page < 0: page = 0
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
         
         cursor.execute("SELECT file_name, status, id FROM progress ORDER BY start_time")
-        rows = cursor.fetchall()
+        rawrows = cursor.fetchall()
+        reverserawrows = rawrows[::-1]
 
         cursor.execute("SELECT computer, AVG(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600) AS avg_runtime_seconds FROM progress WHERE status = 'complete' GROUP BY computer;")
         timings = cursor.fetchall()
@@ -241,7 +248,7 @@ def dashboard():
             'runtime': row[2]
         } for row in ref_timings]
         ref_formatted_data_json = json.dumps(ref_formatted_timings)
-        print(ref_formatted_data_json)
+        # print(ref_formatted_data_json)
 
         cursor.execute("SELECT * FROM status;")
         statusList = cursor.fetchall()
@@ -249,11 +256,20 @@ def dashboard():
         for item in statusList:
             status.append(item[0] + ': ' + item[1])
 
+        totalpages = (len(reverserawrows)//14) + int(bool(len(reverserawrows)%14))
+        print(totalpages)
+        if page*14 >= len(reverserawrows):
+            page = 0
+        rowstart = page*14
+        rowend = min(rowstart+14, len(rawrows))
+        rowselection = reverserawrows[rowstart:rowend]
+        rows = rowselection[::-1]
+
         cursor.close()
         conn.close()
 
 
-        return render_template('dashboard.html', rows = rows, status=status, formatted_data=formatted_data_json, reference_counts=formatted_reference_counts, ref_timings=ref_formatted_data_json)
+        return render_template('dashboard.html', rows=rows, status=status, currpage=page+1, totalpages=totalpages, formatted_data=formatted_data_json, reference_counts=formatted_reference_counts, ref_timings=ref_formatted_data_json)
         # return render_template('dashboard.html', rows = rows)
     except Exception as e:
         return f"Error: {e}"
@@ -332,7 +348,20 @@ def get_all_configurations():
 
 @app.route('/id')
 def id():
- return render_template('id.html')
+    all_configurations = get_all_configurations()
+    pattern = str(all_configurations['ID']['encode'])
+    return render_template('id.html', pattern=pattern)
+
+@app.route('/id_pattern_encode')
+def id():
+    pattern = '1'
+    return render_template('id.html', pattern=pattern)
+
+@app.route('/requestdbs', methods=['POST'])
+def requestdbs():
+    paths = request.json
+    print(paths)
+    return 'success'
 
 @app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
@@ -358,11 +387,16 @@ def configuration():
     if request.method == 'POST':
         computer_name = request.form['computer_name']
         config_values = read_config(computer_name)
-        return render_template('configuration.html', computer_name=computer_name, config_values=config_values, all_configurations=all_configurations, clair_models=clair_models, bed_files=bed_files, gene_sources=gene_sources, reference_files=reference_files)
     elif request.method == 'GET':
         # If no computer name is specified, show the default configuration
+        computer_name = None
         config_values = read_config()
-        return render_template('configuration.html', computer_name=None, config_values=config_values, all_configurations=all_configurations, clair_models=clair_models, bed_files=bed_files, gene_sources=gene_sources, reference_files=reference_files, databases=databases)
+    
+    output_paths = databaseparser['PATHS']['paths'].split(',')
+    # print(output_paths)
+
+    return render_template('configuration.html', computer_name=computer_name, config_values=config_values, all_configurations=all_configurations, clair_models=clair_models, bed_files=bed_files, gene_sources=gene_sources, reference_files=reference_files, databases=databases, output_paths=output_paths)
+
 
 @app.route('/figuregenerator')
 def figuregenerator():
@@ -992,6 +1026,8 @@ def get_info(id):
         status = str(row[2])
         computer = str(row[4])
 
+        print(datetime.now())
+
         info = {
             "startTime": startTime,
             "endTime": endTime,
@@ -1003,6 +1039,29 @@ def get_info(id):
         return jsonify(info)
     except Exception as e:
         return str(e)
+    
+@socketio.on('request_file')
+def handle_request_file(worker_name):
+    alreadyprocessed = ''
+    file_path = f'{worker_name}.log'
+    event_name = f'log_{worker_name}'
+
+    with open(f'/usr/src/app/polarpipeline/resources/{file_path}', 'r', buffering=1) as file:
+
+        # line = file.readline()
+        # while line:
+        #     if not "process > " in line and not line.startswith("executor >  local") and not line.startswith('WARN:') and not line.startswith("\n"):
+        #         alreadyprocessed += line
+        #     line = file.readline()
+
+        # socketio.emit(event_name, alreadyprocessed)
+        while True:
+            line = file.readline()
+            if not line:
+                socketio.sleep(0.1)
+                continue
+            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR'):
+                socketio.emit(event_name, line)
     
 @app.route('/abort/<string:id>')
 def abort(id):

@@ -10,7 +10,12 @@ import configparser
 import subprocess
 from datetime import datetime
 
-app = Celery('tasks', broker='pyamqp://guest:guest@10.21.5.24:5672/')
+setup_parser = configparser.ConfigParser()
+setup_parser.read('/usr/src/app/polarpipeline/resources/variables.config')
+ip = setup_parser['network']['host_ip']
+
+
+app = Celery('tasks', broker=f'pyamqp://guest:guest@{ip}:5672/')
 
 # def help():
 #     print('\t-i: input directory (no default, must be set)\n\

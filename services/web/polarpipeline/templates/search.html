@@ -32,6 +32,11 @@
             border: 1px solid #ddd;
             border-radius: 10px;
         }
+
+        .table-info {
+            border: none;
+            background-color: white;
+        }
         
         .btn-submit {
             background-color: #007bff;
@@ -176,7 +181,7 @@
                 <h3>Preview</h3>
             </div>
             <div class="container col-6" style="display: flex; justify-content: flex-end;">
-                <button class="btn" disabled>Total: {{ numresults }}</button>
+                <button class="btn table-info" disabled>Total: {{ numresults }}</button>
             </div>
         </div>
         
@@ -206,14 +211,14 @@
                 <a class="btn btn-primary" href="{{ url_for('search_download') }}">Download</a>
             </div>
             <div class="container col-6" style="display: flex; justify-content: flex-end;" onkeypress="pagenumupdated(event)">
-                <button class="btn" disabled>Results per Page:</button>
+                <button class="btn table-info" disabled>Results per Page:</button>
                 <input id="numsperpageinput" list="numsperpage" name="numperpage" style="width:60px;" placeholder="{{ numperpage }}" value="{{ numperpage }}"></input>
-                <button class="btn" disabled></button>
+                <button class="btn table-info" disabled></button>
                     
                 {% if prevpage != -1 %}
                     <button class="btn btn-primary" onclick="generatePage(this.value)" value="{{ prevpage }}"><</button>
                 {% endif %}
-                <button class="btn" disabled>{{ page + 1 }}</button>
+                <button class="btn table-info" disabled>{{ page + 1 }}</button>
                 {% if nextpage != -1 %}
                     <button class="btn btn-primary" onclick="generatePage(this.value)" value="{{ nextpage }}">></button>
                 {% endif %}

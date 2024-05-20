@@ -199,6 +199,20 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="card-footer">
+                            <div class="row justify-content-end">
+                                <div class="col-auto"></div>
+                                <div class="col-auto">
+                                    {% if currpage > 1 %}
+                                        <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage-2) }}"><</a>
+                                    {% endif %}
+                                        <button class="btn btn-light" disabled>Page {{ currpage }}/{{ totalpages }}</button>
+                                    {% if currpage < totalpages %}
+                                        <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage) }}">></a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -223,9 +237,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deleteRunModalLabel">Delete Run</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p>Are you sure?</p>

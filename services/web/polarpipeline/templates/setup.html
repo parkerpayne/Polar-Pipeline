@@ -153,7 +153,7 @@
 
                 <div class="dashboard-container">
                     <h3>Setup</h3>
-                    <p>This page will walk you though the entire process to set up a new computer.</p>
+                    <p>This page will walk you though the entire process to set up a new worker.</p>
                 </div>
 
                 <div class="dashboard-container">
@@ -169,7 +169,7 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>sudo apt install pigz<br>sudo apt install bedtools<br>sudo apt install tabix<br>pip install celery<br>cpan DBI<br>cpan Math::CDF<br>cpan List::MoreUtils</code>
+                            <code>sudo apt install pigz<br>sudo apt install bedtools<br>sudo apt install tabix<br>sudo apt install celery<br>sudo apt install nfs-common<br>pip install tqdm<br>pip install psycopg2-binary<br>pip install bs4<br>sudo cpan DBI<br>sudo cpan Math::CDF<br>sudo cpan List::MoreUtils</code>
                         </div>
                     </div>
                 </div>
@@ -263,8 +263,23 @@
 
                 <div class="dashboard-container">
                     <h3>5 - Vep</h3>
-                    <p>Install VEP and all plugins. There should be two folders in the home directory, <code>ensembl-vep</code> and <code>.vep</code>.
-                    Simply copy the <code>vep-resources</code> folder from another computer and move it to the home directory.</p>
+                    <p>Install VEP and all plugins. The plugins are as follows:</p>
+                    <ul>
+                        <li>LoFtool</li>
+                        <li>Mastermind</li>
+                        <li>CADD</li>
+                        <li>Carol</li>
+                        <li>Condel</li>
+                        <li>pLI</li>
+                        <li>PrimateAI</li>
+                        <li>dbNSFP</li>
+                        <li>REVEL</li>
+                        <li>AlphaMissense</li>
+                        <li>EVE</li>
+                        <li>DisGeNET</li>
+                    </ul>
+                    <p>There should be three folders in the home directory, <code>ensembl-vep</code>, <code>.vep</code> and <code>vep-resources</code>, the latter containing ALL extra files
+                    required by the plugins.</p>
 
                     <p>Inside both <code>.vep</code> and <code>vep-resources</code>, there will be a file at <code>/home/{PCNAME}/.vep/Plugins/config/Condel/config/condel_SP.conf</code>
                     The first line of that file contains a path for some reason, and this path is necessary for sift and polyphen. I don't know why. You must
@@ -280,6 +295,13 @@
                 </div>
 
                 <div class="dashboard-container">
+                    <h3>7 - Set up final variables</h3>
+                    <p>Inside the resources folder, (<code>/mnt/pipeline_resources</code> on your worker) there is a file called <code>variables.config.example</code>.
+                    Open the file and configure the server's local ip, as well as the sudo password for each worker. The name should match the output of <code>whoami</code>
+                    .</p>
+                </div>
+
+                <div class="dashboard-container">
                     <h3>Complete</h3>
                     <p>The setup should at this point be complete, and the worker can be started by running the celery app from the <code>/mnt/pipeline_resources</code> directory:</p>
                     <div class="terminal-card">
@@ -292,7 +314,7 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>celery -A tasks worker --concurrency=1 --prefetch-multiplier=1 --loglevel=INFO</code>
+                            <code>celery -A tasks worker --concurrency=1 --prefetch-multiplier=1 --loglevel=INFO > $(whoami).log 2>&1</code>
                         </div>
                     </div>
                 </div>

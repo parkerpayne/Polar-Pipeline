@@ -30,3 +30,8 @@ function showOutput(outputText) {
     $('#outputModal').modal('show');
 }
 document.querySelector('form').addEventListener('submit', convertFunction);
+
+$(function() {
+    $("#sortableList").sortable();
+    $("#sortableList").disableSelection();
+});

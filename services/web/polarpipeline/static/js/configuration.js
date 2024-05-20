@@ -1,4 +1,10 @@
 $(document).ready(function () {
+    var pathfields = $('.PathField')
+    Array.from(pathfields).forEach(element => {
+        if(!element.disabled){
+            element.disabled = true;
+        }
+    });
     // Function to open the configurations dropdown for a specific computer name
     function openConfigDropdown(computerName) {
         var dropdown = $('input[name="computer_name"][value="' + computerName + '"]').closest('.config-dropdown-form').find('.configurations-dropdown');
@@ -85,4 +91,53 @@ function removeItem(val){
     const redirectUrl = `/remove/${encodedVal}`;
     console.log(redirectUrl);
     window.location.href = redirectUrl;
+}
+
+function toggleEdit(type){
+    const edittype = type + '-btn';
+    var buttons = document.getElementsByClassName(edittype);
+    Array.from(buttons).forEach(element => {
+        if (element.classList.contains('PathField')){
+            if (element.disabled){
+                element.disabled = false;
+            }else{
+                element.disabled = true;
+            }
+        }else{
+            element.classList.toggle('invisible-button');
+        }
+        
+    });
+}
+
+function generateList(btn){
+    btn.onclick = '';
+    var rawpaths = $('.PathField');
+    toggleEdit('populate-text');
+    var paths = [];
+    Array.from(rawpaths).forEach(element => {
+        paths.push(element.value);
+    });
+    var populateModalTarget = document.getElementById('populateModalTarget');
+    fetch('/requestdbs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paths)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        console.log('test');
+    })
+    .catch(error => {
+        // Handle error
+        console.error('Error:', error);
+    });
+
 }
