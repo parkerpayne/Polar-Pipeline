@@ -6,7 +6,6 @@ services:
     command: python manage.py run -h 0.0.0.0
     volumes:
       - ./services/web/:/usr/src/app
-      - ./services/databases:/usr/src/app/databases
       - ./services/web/vep/:/usr/src/app/vep
       - ./services/web/vep/.vep:/root/.vep
       - ./mnt:/mnt
@@ -58,7 +57,4 @@ networks:
         - subnet: 10.20.0.0/16
 volumes:
   postgres_data:
-  output:
-  input:
-  databases:
     

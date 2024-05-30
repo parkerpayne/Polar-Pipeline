@@ -139,51 +139,7 @@
 </head>
 <body>
     <div class="body">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-            <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('id') }}">ID Generator</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
-                        <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                            <a class="nav-link" href="{{ url_for('reportresult') }}">SNV Report</a>
-                            <a class="nav-link" href="{{url_for('reportbrowse') }}">SV Report</a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
-                        <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                            <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
-                            <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('configuration') }}">Configuration</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        {% include 'navbar.html' %}
 
         <div class="container">
             <div class="row">
@@ -226,12 +182,12 @@
             </div>
         </div>
     </div>
-    <script>
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
             var myModal = new bootstrap.Modal(document.getElementById('myModal'));
             myModal.show();
         });
-    </script>
+    </script> -->
 
     <div id="notification" class="hidden">
         <div class="notification-content">
@@ -250,6 +206,14 @@
                         <div class="row">
                             <h4 style="margin-top: 1rem;">File Path:</h5>
                             <h6 id="filePath" style="word-break: break-all;">{{ placeholder }}</h6>
+                        </div>
+                        <div class="row">
+                            <h5 style="margin-top: 1rem">Output path</h5>
+                            <select class="form-select" id="outputSelect" style="min-width:100%" aria-label="Default select example">
+                                {% for item in outputs %}
+                                    <option value="{{ item }}">{{ item }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="row">
                             <h5 style="margin-top: 1rem;">Clair Model:</h5>

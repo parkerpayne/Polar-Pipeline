@@ -10,13 +10,13 @@ import subprocess
 from datetime import datetime
 
 setup_parser = configparser.ConfigParser()
-setup_parser.read('variables.config')
-ip = setup_parser['network']['host_ip']
+setup_parser.read('/mnt/pipeline_resources/config.ini')
+ip = setup_parser['Network']['host_ip']
 
 app = Celery('tasks', broker=f'pyamqp://guest:guest@{ip}:5672/')
 
 @app.task
-def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):
+def process(input_file_path, output_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):
     
     clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
     gene_source_path = []
@@ -37,10 +37,10 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
 
     config.read(CONFIG_FILE_PATH)
     
-    if not os.path.isdir(config['General']['output_directory']):
+    if not os.path.isdir(output_path):
         update_db(id, 'status', 'output path not found')
         quit()
-    else: print('output path:', config['General']['output_directory'])
+    else: print('output path:', output_path)
 
     if config.has_section(pc_name):
         threads = config[pc_name]['threads']
@@ -91,7 +91,7 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
     
     currentTime = datetime.now()
     formattedTime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_dir = os.path.join(config['General']['output_directory'],f'{formattedTime}_{run_name}')
+    output_dir = os.path.join(output_path,f'{formattedTime}_{run_name}')
     
     update_db(id, 'start_time', currentTime)
     
@@ -341,7 +341,7 @@ def process(input_file_path, clair_model_name, gene_source_name, bed_file_name, 
 
 
 @app.task
-def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_name, id):
+def processT2T(input_file_path, output_path, clair_model_name, bed_file_name, reference_file_name, id):
     clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
     reference_path = os.path.join('/mnt/pipeline_resources/reference_files', reference_file_name)
     bed_file_path = []
@@ -357,10 +357,10 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
 
     config.read(CONFIG_FILE_PATH)
 
-    if not os.path.isdir(config['General']['output_directory']):
+    if not os.path.isdir(output_path):
         update_db(id, 'status', 'output path not found')
         quit()
-    else: print('output path:', config['General']['output_directory'])
+    else: print('output path:', output_path)
 
     if config.has_section(pc_name):
         threads = config[pc_name]['threads']
@@ -410,7 +410,7 @@ def processT2T(input_file_path, clair_model_name, bed_file_name, reference_file_
     # CHANGE FILENAMES TO INCLUDE TIME
     run_name = formattedTime + '_' + run_name + '_T2T'
 
-    output_dir = os.path.join(config['General']['output_directory'],f'{run_name}')
+    output_dir = os.path.join(output_path,f'{run_name}')
 
     subprocess.run(["mv", os.path.join(working_path, input_file_path.split('/')[-1]), os.path.join(working_path, run_name+'.'+input_file_path.split('/')[-1].split('.')[-1])])
     input_file_path = os.path.join(working_path, run_name+'.'+input_file_path.split('/')[-1].split('.')[-1])

@@ -1,6 +1,0 @@
-[network]
-host_ip=0.0.0.0
-
-[passwords]
-worker1=passwd1
-worker2=passwd2

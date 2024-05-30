@@ -1,0 +1,18 @@
+[Output]
+output = /path/to/output
+
+[Network]
+host_ip = 127.0.0.1
+
+[ID]
+encode = 1234567|
+static = 
+
+[Default]
+threads = 30
+password = password
+
+[worker1]
+threads = 16
+password = password
+

@@ -15,9 +15,9 @@ def whoami():
     return completed_process.stdout.strip()
 
 setup_parser = configparser.ConfigParser()
-setup_parser.read('variables.config')
-ip = setup_parser['network']['host_ip']
-password = setup_parser['passwords'][whoami()]
+setup_parser.read('/mnt/pipeline_resources/config.ini')
+ip = setup_parser['Network']['host_ip']
+password = setup_parser[whoami()]['password']
 
 #  __          ________ ____      _____ ______ _______      ________ _____                                             
 #  \ \        / /  ____|  _ \    / ____|  ____|  __ \ \    / /  ____|  __ \                                            
@@ -661,6 +661,7 @@ def collapseDuplicateRows(inputfile):
     combined_output = []
     combined_rows = {}
     columns = getColumns(inputfile)
+    last_chrom = 'chr1'
     for line in inputfile:
         if line.strip().startswith('#'):
             combined_output.append(line)
@@ -674,7 +675,13 @@ def collapseDuplicateRows(inputfile):
             combined_rows[key][columns['Consequence']] = ','.join([combined_rows[key][columns['Consequence']], tabbed_line[columns['Consequence']]])
         else:
             combined_rows[key] = tabbed_line
-    combined_output += ['\t'.join(combined_rows[key]) + '\n' for key in combined_rows]
+        curr_chrom = tabbed_line[columns['#CHROM']]
+        if not last_chrom == curr_chrom:
+            last_chrom = curr_chrom
+            for key in combined_rows:
+                combined_output.append('\t'.join(combined_rows[key]) + '\n')
+                combined_rows[key] = []
+            combined_rows = {}
     return combined_output
 
 

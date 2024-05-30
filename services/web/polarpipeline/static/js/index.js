@@ -66,6 +66,7 @@ function getGeneSourceSelection(bedFiles) {
 }
 
 function startProcessing() {
+    var outputpath = document.querySelector("#outputSelect").value;
     var selectedClairModel = document.querySelector("#clairModelSelect").value;
     var filepath = document.getElementById("filePath").textContent;
 
@@ -97,6 +98,7 @@ function startProcessing() {
         url: '/trigger_processing',
         data: JSON.stringify({
             path: filepath,
+            output_path: outputpath,
             clair: selectedClairModel,
             grch_reference: grch_reference_file,
             grch_bed: grch_bed_files,
@@ -136,4 +138,14 @@ function toggleGeneSource(bedFile) {
     } else {
         geneSourceSelect.style.display = "none"; // Hide gene source dropdown
     }
+}
+
+var outputSelect = document.getElementById('outputSelect');
+outputSelect.addEventListener('change', function() {
+    var selectedOutput = outputSelect.value;
+    localStorage.setItem('selectedOutput', selectedOutput);
+});
+var storedOutput = localStorage.getItem('selectedOutput');
+if (storedOutput) {
+    outputSelect.value = storedOutput;
 }

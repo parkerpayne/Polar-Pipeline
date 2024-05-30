@@ -51,11 +51,32 @@ $(document).ready(function () {
         event.preventDefault(); // Prevent the form from submitting normally
 
         var computerName = $(this).find('input[name="computer_name"]').val();
+        var config_data = $(this).serialize();
+        if (computerName == "Output"){
+            var formData = $(this).serializeArray();
+    
+            var outputPaths = formData.filter(function(item) {
+                return item.name === 'Output' && item.value.trim() !== '';
+            }).map(function(item) {
+                return item.value;
+                
+            }).join(';');
+            
+            formData = formData.filter(function(item) {
+                return item.name !== 'Output';
+            });
+            formData.push({name: 'Output', value: outputPaths});
+            
+            config_data = $.param(formData);
+            
+            console.log(config_data);
+        }
+
         // Make an AJAX POST request to save_configuration endpoint
         $.ajax({
             type: 'POST',
             url: '/save_configuration',
-            data: $(this).serialize(),
+            data: config_data,
             success: function (data) {
                 // Save the open configuration name in local storage before reloading the page
                 localStorage.setItem('openConfig', computerName);
@@ -82,7 +103,15 @@ function chooseFile(inputId) {
 
     fileInput.addEventListener("change", function () {
         const form = fileInput.closest("form");
+        if (inputId == "fileInput1"){
+            const selectedFile = fileInput.files[0];
+            if (!selectedFile.name.endsWith('.zip') && !selectedFile.name.endsWith('.gz')) {
+                alert('Clair3 models are folders, so a zip must be uploaded!');
+                return;
+            }
+        }
         form.submit();
+        
     });
 }
 
@@ -140,4 +169,11 @@ function generateList(btn){
         console.error('Error:', error);
     });
 
+}
+
+function newPath() {
+    var path = document.createElement("div")
+    path.innerHTML = `<input type="text" class="form-control output-path-box mb-2" id="Output" name="Output"></input>`;
+    container = document.getElementById('output-path-container');
+    container.appendChild(path);
 }

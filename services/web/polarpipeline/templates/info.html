@@ -141,51 +141,7 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('id') }}">ID Generator</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
-                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                        <a class="nav-link" href="{{ url_for('reportresult') }}">SNV Report</a>
-                        <a class="nav-link" href="{{url_for('reportbrowse') }}">SV Report</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
-                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                        <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
-                        <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('configuration') }}">Configuration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    {% include 'navbar.html' %}
 
     <div class="container">
         <div class="row">
@@ -347,48 +303,10 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-        function updateInfo(id) {
-            var statusElement = document.getElementById('status');
-            var endTimeElement = document.getElementById('endTime');
-            var runtimeElement = document.getElementById('runtime');
-            var startTimeElement = document.getElementById('startTime');
-            var computerElement = document.getElementById('computer');
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/get_info/' + id);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var response = JSON.parse(xhr.responseText);
-                    statusElement.textContent = response.status;
-                    startTimeElement.textContent = response.startTime;
-                    endTimeElement.textContent = response.endTime;
-                    runtimeElement.textContent = response.runtime;
-                    computerElement.textContent = response.computer;
-                }
-            };
-            xhr.send();
-        }
-
-        // Get the file name from the Flask route parameter (you may need to adapt this based on your actual route)
-        var id = '{{ id }}';
-        var file_name = '{{ file_name }}';
-        var endTime = '{{ endTime }}';
-        var startTime = '{{ startTime }}';
-        var computer = '{{ computer }}';
-        var status = '{{ status }}';
-        // Call the updateInfo function every second
-        if (status != "complete") {
-            setInterval(function () {
-                updateInfo(id);
-                // if complete call function to make downloads appear
-            }, 1000);
-        } else {
-            // call function to make downloads appear
-        }
-    </script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <script src="{{ url_for('static', filename='js/info.js') }}"></script>
 
 </body>
 

@@ -32,7 +32,8 @@ function startProcessing() {
         data: JSON.stringify({ path: filepath, id: sniffles }), // Convert data to JSON
         success: function(response) {
             // Handle successful response from Flask server
-            resultbox.value = response;
+            // console.log(response);
+            resultbox.value = response.join('\n');
         },
         error: function(xhr, status, error) {
             // Handle errors in the AJAX request

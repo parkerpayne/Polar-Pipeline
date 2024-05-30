@@ -19,4 +19,5 @@
 **/.nextflow*
 **/frequency/*
 !**/frequency/createNewFrequency.py
-**/variables.config
+**/config.ini
+**/*.log

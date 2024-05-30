@@ -189,14 +189,38 @@ function cancelSearch(){
     });
 }
 var progressBar = document.getElementById('progressbar');
+var timebtn = document.getElementById('timebtn');
+var lastProgress = null;
+var formattedTime = "--:--";
 function check_progress() {
 fetch('/searchprogress')
     .then(response => response.json())
     .then(progress => {
+        if (!lastProgress || JSON.stringify(progress) !== JSON.stringify(lastProgress)) {
+            // Update the progress and formatted time if there's a change in progress
+            lastProgress = progress;
+            formattedTime = progress.remaining.minutes.toString().padStart(2, '0') + ":" + progress.remaining.seconds.toString().padStart(2, '0');
+        } else {
+            if (formattedTime !== "--:--") {
+                let [minutes, seconds] = formattedTime.split(':').map(Number);
+                if (seconds === 0) {
+                    if (minutes === 0) {
+                        return;
+                    }
+                    minutes -= 1;
+                    seconds = 59;
+                } else {
+                    seconds -= 1;
+                }
+                formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
         console.log(progress);
         progressBar.style.width = (progress.progress * 100).toFixed(0) + "%";
         progressBar.setAttribute('aria-valuenow', progress.progress);
         progressBar.innerText = (progress.progress * 100).toFixed(0) + "%";
+        timebtn.innerText = "Remaining: " + formattedTime
+        console.log("Remaining: " + formattedTime);
         if(progressBar.classList.contains("bg-success")){
             progressBar.classList.remove("bg-success");
         }

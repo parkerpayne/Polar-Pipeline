@@ -99,51 +99,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('id') }}">ID Generator</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
-                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                        <a class="nav-link" href="{{ url_for('reportresult') }}">SNV Report</a>
-                        <a class="nav-link" href="{{url_for('reportbrowse') }}">SV Report</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('frequency') }}">Frequency</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
-                    <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
-                        <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
-                        <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('configuration') }}">Configuration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    {% include 'navbar.html' %}
 
     <!-- Use Bootstrap grid system to create a responsive layout -->
     <div class="container">
@@ -281,23 +237,23 @@
                     <p>There should be three folders in the home directory, <code>ensembl-vep</code>, <code>.vep</code> and <code>vep-resources</code>, the latter containing ALL extra files
                     required by the plugins.</p>
 
-                    <p>Inside both <code>.vep</code> and <code>vep-resources</code>, there will be a file at <code>/home/{PCNAME}/.vep/Plugins/config/Condel/config/condel_SP.conf</code>
+                    <p>Inside the <code>.vep</code> directory, there will be a file at <code>/home/{PCNAME}/.vep/Plugins/config/Condel/config/condel_SP.conf</code>
                     The first line of that file contains a path for some reason, and this path is necessary for sift and polyphen. I don't know why. You must
                     replace the path with the path to the Condel folder. For instance, if the file's path is 
-                    <code>/home/i9a6000/.vep/Plugins/config/Condel/config/condel_SP.conf</code>, you will define <code>condel.dir</code> as 
-                    <code>/home/i9a6000/.vep/Plugins/config/Condel</code>. Do this for both locations.</p>
+                    <code>/home/worker1/.vep/Plugins/config/Condel/config/condel_SP.conf</code>, you will define <code>condel.dir</code> as 
+                    <code>/home/worker1/.vep/Plugins/config/Condel</code>.</p>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>6 - Shared Directories</h3>
                     <p>Set up NFS for the resources. Create the NFS directory <code>/mnt/pipeline_resources/</code>. Connect it to the <code>resources</code>
-                    folder in the docker container located at <code>../polar-pipeline-docker/services/web/polarpipeline/resources</code>.</p>
+                    folder in the docker container located at <code>../polar-pipeline/services/web/polarpipeline/resources</code>.</p>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>7 - Set up final variables</h3>
-                    <p>Inside the resources folder, (<code>/mnt/pipeline_resources</code> on your worker) there is a file called <code>variables.config.example</code>.
-                    Open the file and configure the server's local ip, as well as the sudo password for each worker. The name should match the output of <code>whoami</code>
+                    <p>On the Configuration page, there are a couple more things to configure. Define the output directories under Output, the server's local ip under Network, 
+                    as well as the threads and sudo password for each worker under Worker Configuration. The name should match the output of <code>whoami</code> run on the worker
                     .</p>
                 </div>
 
