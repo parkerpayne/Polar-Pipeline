@@ -1,10 +1,13 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-    <a class="navbar-brand" href="{{ url_for('browse') }}">Polar Pipeline</a>
+    <a class="navbar-brand" href="{{ url_for('dashboard') }}">Polar Pipeline</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('browse') }}">File Select</a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
             </li>
@@ -15,7 +18,12 @@
                 <a class="nav-link" href="{{ url_for('figuregenerator') }}">Protein Figures</a>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
+                <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Report
+                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" class="bi bi-triangle-fill" viewBox="0 0 16 16" style="transform: rotate(180deg);">
+                        <path fill-rule="evenodd" d="M7.022 1.566a1.13 1.13 0 0 1 1.96 0l6.857 11.667c.457.778-.092 1.767-.98 1.767H1.144c-.889 0-1.437-.99-.98-1.767z"/>
+                    </svg>
+                </a>
                 <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
                     <a class="nav-link" href="{{ url_for('reportresult') }}">SNV Report</a>
                     <a class="nav-link" href="{{url_for('reportbrowse') }}">SV Report</a>
@@ -28,7 +36,12 @@
                 <a class="nav-link" href="{{ url_for('qc') }}">QC</a>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search</a>
+                <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Search
+                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" class="bi bi-triangle-fill" viewBox="0 0 16 16" style="transform: rotate(180deg);">
+                        <path fill-rule="evenodd" d="M7.022 1.566a1.13 1.13 0 0 1 1.96 0l6.857 11.667c.457.778-.092 1.767-.98 1.767H1.144c-.889 0-1.437-.99-.98-1.767z"/>
+                    </svg>
+                </a>
                 <div class="dropdown-menu bg-dark" aria-labelledby="searchDropdown">
                     <a class="nav-link" href="{{ url_for('search') }}">Database Search</a>
                     <a class="nav-link" href="{{url_for('filesearchbrowse') }}">File Search</a>

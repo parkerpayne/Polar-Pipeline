@@ -193,64 +193,64 @@ var timebtn = document.getElementById('timebtn');
 var lastProgress = null;
 var formattedTime = "--:--";
 function check_progress() {
-fetch('/searchprogress')
-    .then(response => response.json())
-    .then(progress => {
-        if (!lastProgress || JSON.stringify(progress) !== JSON.stringify(lastProgress)) {
-            // Update the progress and formatted time if there's a change in progress
-            lastProgress = progress;
-            formattedTime = progress.remaining.minutes.toString().padStart(2, '0') + ":" + progress.remaining.seconds.toString().padStart(2, '0');
-        } else {
-            if (formattedTime !== "--:--") {
-                let [minutes, seconds] = formattedTime.split(':').map(Number);
-                if (seconds === 0) {
-                    if (minutes === 0) {
-                        return;
+    fetch('/searchprogress')
+        .then(response => response.json())
+        .then(progress => {
+            if (!lastProgress || JSON.stringify(progress) !== JSON.stringify(lastProgress)) {
+                // Update the progress and formatted time if there's a change in progress
+                lastProgress = progress;
+                formattedTime = progress.remaining.minutes.toString().padStart(2, '0') + ":" + progress.remaining.seconds.toString().padStart(2, '0');
+            } else {
+                if (formattedTime !== "--:--") {
+                    let [minutes, seconds] = formattedTime.split(':').map(Number);
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            return;
+                        }
+                        minutes -= 1;
+                        seconds = 59;
+                    } else {
+                        seconds -= 1;
                     }
-                    minutes -= 1;
-                    seconds = 59;
-                } else {
-                    seconds -= 1;
+                    formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
-                formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
-        }
-        console.log(progress);
-        progressBar.style.width = (progress.progress * 100).toFixed(0) + "%";
-        progressBar.setAttribute('aria-valuenow', progress.progress);
-        progressBar.innerText = (progress.progress * 100).toFixed(0) + "%";
-        timebtn.innerText = "Remaining: " + formattedTime
-        console.log("Remaining: " + formattedTime);
-        if(progressBar.classList.contains("bg-success")){
-            progressBar.classList.remove("bg-success");
-        }
-        if(progressBar.classList.contains("bg-warning")){
-            progressBar.classList.remove("bg-warning");
-        }
-        if(progressBar.classList.contains("bg-danger")){
-            progressBar.classList.remove("bg-danger");
-        }
-        if(progress.color == "green"){
-            progressBar.classList.add("bg-success");
-        }
-        if(progress.color == "yellow"){
-            progressBar.classList.add("bg-warning");
-        }
-        if(progress.color == "red"){
-            progressBar.classList.add("bg-danger");
-        }
-        if(progressBar.classList.contains("progress-bar-animated") && progress.color != "spin"){
-            progressBar.classList.remove("progress-bar-striped");
-            progressBar.classList.remove("progress-bar-animated");
-        }else if(!progressBar.classList.contains("progress-bar-animated") && progress.color == "spin"){
-            progressBar.classList.add("progress-bar-striped");
-            progressBar.classList.add("progress-bar-animated");
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-setTimeout(check_progress, 1000);
+            console.log(progress);
+            progressBar.style.width = (progress.progress * 100).toFixed(0) + "%";
+            progressBar.setAttribute('aria-valuenow', progress.progress);
+            progressBar.innerText = (progress.progress * 100).toFixed(0) + "%";
+            timebtn.innerText = "Remaining: " + formattedTime
+            console.log("Remaining: " + formattedTime);
+            if(progressBar.classList.contains("bg-success")){
+                progressBar.classList.remove("bg-success");
+            }
+            if(progressBar.classList.contains("bg-warning")){
+                progressBar.classList.remove("bg-warning");
+            }
+            if(progressBar.classList.contains("bg-danger")){
+                progressBar.classList.remove("bg-danger");
+            }
+            if(progress.color == "green"){
+                progressBar.classList.add("bg-success");
+            }
+            if(progress.color == "yellow"){
+                progressBar.classList.add("bg-warning");
+            }
+            if(progress.color == "red"){
+                progressBar.classList.add("bg-danger");
+            }
+            if(progressBar.classList.contains("progress-bar-animated") && progress.color != "spin"){
+                progressBar.classList.remove("progress-bar-striped");
+                progressBar.classList.remove("progress-bar-animated");
+            }else if(!progressBar.classList.contains("progress-bar-animated") && progress.color == "spin"){
+                progressBar.classList.add("progress-bar-striped");
+                progressBar.classList.add("progress-bar-animated");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    setTimeout(check_progress, 1000);
 }
 check_progress();
 function selection(instruction) {

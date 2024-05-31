@@ -85,7 +85,19 @@
             padding: 10px 20px;
             cursor: pointer;
         }
+        .freq-db-table {
+        width: 100%;
+        border-collapse: collapse;
+        }
+        .freq-td {
+            vertical-align: middle; /* Center content vertically */
+        }
+        .freq-td-dots {
+            text-align: right;
+        }
+
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css' )}}">
 </head>
 <body onload="notification()">
     {% include 'navbar.html' %}
@@ -98,6 +110,7 @@
                 <h5>Format: chr[CHR]_[POS]_[REF]/[ALT]</h5>
                 <input class="form-control" type="text" id="inputBox" placeholder={{ placeholder }}>
                 <button class="btn btn-primary" style="margin-top: 1rem;" onclick="submitToVep(); beginsearch()">Submit</button>
+                <button class="btn btn-secondary" style="margin-top: 1rem" data-bs-toggle="modal" data-bs-target="#databaseModal">Manage</button>
             </form>
             
         </div>
@@ -174,11 +187,63 @@
             </div>
     </div>
 
+    <div class="modal modal-lg fade" id="databaseModal" tabindex="-1" aria-labelledby="databaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="databaseModalLabel">Manage Frequency Databases</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- List Viewer for existing databases -->
+                    <table class="table freq-db-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Number of Files</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for folder in folders %}
+                            <tr>
+                                <td class="freq-td">{{ folder[1].split(';')[0] }}</td>
+                                <td class="freq-td">{{ folder[1].split(';')[1] }}</td>
+                                <td class="freq-td">{{ folder[2] }}</td>
+                                <td class="freq-td freq-td-dots">
+                                    <div class="dropdown">
+                                        <button class="btn" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                                            </svg>
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <a class="dropdown-item" href="{{ url_for('deletefrequency', filename=folder[0]) }}">Delete</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button id="createButton" class="btn btn-primary" onclick="beginsearch()">Create New</button>
+                    <!-- Progress bar -->
+                    <div id="progressContainer" class="mt-3" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar" id="progressBar" role="progress_bar" style="width:100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <input type="hidden" id="notificationValue" value={{ done }}>
 
 
 
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/frequency.js') }}"></script>
 </body>

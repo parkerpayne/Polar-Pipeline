@@ -1,0 +1,23 @@
+.navbar .nav-link {
+    position: relative;
+    margin-left: 0.1rem;
+    margin-right: 0.1rem;
+}
+
+.navbar .nav-link::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    width: 102%;
+    height: 40px;
+    background-color: white;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.navbar .nav-link:hover::after {
+    opacity: 0.25;
+}

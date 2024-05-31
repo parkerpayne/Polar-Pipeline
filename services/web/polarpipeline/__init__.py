@@ -85,9 +85,13 @@ base_path = '/mnt'
 def alphabetize(item):
     return item.lower()
 
+@app.route('/')
+def home():
+    return redirect(url_for('dashboard'))
+
 # route for the pipeline file browser, populates the run options modal as well, see reportbrowse for more thorough description of filebrowser code
 @app.route('/browse/<path:path>')
-@app.route('/')
+@app.route('/browse')
 def browse(path=None):
     if path is None:
         path = base_path
@@ -318,7 +322,7 @@ def dashboard(page=0):
         return render_template('dashboard.html', rows=rows, status=status, currpage=page+1, totalpages=totalpages, formatted_data=formatted_data_json, reference_counts=formatted_reference_counts, ref_timings=ref_formatted_data_json)
         # return render_template('dashboard.html', rows = rows)
     except Exception as e:
-        cursor.rollback()
+        conn.rollback()
         return f"Error: {e}"
 
 # there are times (like if a worker is shut down while there are things in queue) where things will be abandoned in the queue, this just clears all of them.
@@ -2005,16 +2009,41 @@ def reportbrowse(path=None):
 
     return render_template('reportsvbrowse.html', current_path=full_path, directory_listing=directory_listing, ordered_directory=ordered_directory, up_level_path=up_level_path)
 
+def count_lines(filename):
+    if os.path.isfile(filename):
+        with open(filename, 'r') as file:
+            return sum(1 for _ in file)
+    else:
+        return '0'
+    
+def convert_timestamp(timestamp):
+    datetime_obj = datetime.strptime(timestamp, '%y-%m-%d_%H-%M-%S')
+    formatted_datetime = datetime_obj.strftime('%d-%m-%Y;%H:%M:%S')
+    return formatted_datetime
+
+def buildfreqlist():
+    path = './polarpipeline/resources/frequency'
+    folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+    output = []
+    for folder in folders:
+        output.append((folder, convert_timestamp(folder), count_lines(os.path.join(path, folder, 'fileKey.tsv'))))
+    print(output)
+    return output
+
+frequency_progress = 0
 # route to return the frequency of a specific variant within the database
 # accessed both by the navbar as well as the submit button on the frequency page
 @app.route('/frequency/<string:_chr>:<string:pos>:<string:ref>:<string:alt>')
 @app.route('/frequency/<string:_chr>')
 @app.route('/frequency')
 def frequency(_chr='X', pos='X', ref='X', alt='X'):
+    global frequency_progress
+    if frequency_progress == 100:
+        frequency_progress = 0
     chr = urllib.parse.unquote(_chr)
     # if not searching for anything, just return placeholders
     if chr == 'X' and pos == 'X' and ref == 'X' and alt == 'X':
-        return render_template('frequency.html', reportText='', placeholder='chrX_XXXX_X/X', done='green')
+        return render_template('frequency.html', reportText='', placeholder='chrX_XXXX_X/X', done='green', folders=buildfreqlist())
 
     # print(chr, pos, ref, alt)
     # build id to search for in the frequency file
@@ -2056,25 +2085,154 @@ def frequency(_chr='X', pos='X', ref='X', alt='X'):
                 except:
                     pass
             # if line matches, return it along with all files the variant is in
-            return render_template('frequency.html', variant=variant, source=source, placeholder=id, done='green')
+            return render_template('frequency.html', variant=variant, source=source, placeholder=id, done='green', folders=buildfreqlist())
     # if not found, return not found
-    return render_template('frequency.html', variant=variant, source=['not found'], placeholder=id, done='green')
+    return render_template('frequency.html', variant=variant, source=['not found'], placeholder=id, done='green', folders=buildfreqlist())
+
+@app.route('/frequencyprogress', methods=['GET'])
+def frequencyprogress():
+    global frequency_progress
+    return jsonify({'progress': frequency_progress})
+
+@app.route('/deletefrequency/<filename>')
+def deletefrequency(filename):
+    path = os.path.join('./polarpipeline/resources/frequency', filename)
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    return redirect(url_for('frequency'))
 
 # recursive function to find fist file ending in merged_N0.bed in a given directory (used breadth first search bc its only like 2 layers down)
-def findmergedfile(path):
+def findmergedfile(path, suffix):
     for item in os.listdir(path):
         founditem = os.path.join(path, item)
         if os.path.isfile(founditem):
-            if founditem.endswith('merged_N0.bed'):
+            if founditem.endswith(suffix):
                 return founditem
     searchresult = ''
     for item in os.listdir(path):
         founditem = os.path.join(path, item)
         if os.path.isdir(founditem):
-            searchresult = findmergedfile(founditem)
+            searchresult = findmergedfile(founditem, suffix)
             if searchresult:
                 return searchresult
     return searchresult
+
+@app.route('/makefrequency', methods=['POST'])
+def makefrequency():
+    global frequency_progress
+    class Variant:
+        def __init__(self, id, gt, file):
+            self.id = id
+            self._1_0 = 0
+            self._0_1 = 0
+            self._1__1 = 0
+            self._d__d = 0
+            self._0__0 = 0
+            self._0__1 = 0
+            self._1__2 = 0
+            match gt:
+                case '1|0':
+                    self._1_0 = 1
+                case '0|1':
+                    self._0_1 = 1
+                case '1/1':
+                    self._1__1 = 1
+                case './.':
+                    self._d__d = 1
+                case '0/0':
+                    self._0__0 = 1
+                case '0/1':
+                    self._0__1 = 1
+                case '1/2':
+                    self._1__2 = 1
+            self.total = 1
+            self.fileList = [file]
+        def updateCount(self, gt, file):
+            if file not in self.fileList:
+                match gt:
+                    case '1|0':
+                        self._1_0 += 1
+                    case '0|1':
+                        self._0_1 += 1
+                    case '1/1':
+                        self._1__1 += 1
+                    case './.':
+                        self._d__d += 1
+                    case '0/0':
+                        self._0__0 += 1
+                    case '0/1':
+                        self._0__1 += 1
+                    case '1/2':
+                        self._1__2 += 1
+                self.total += 1
+                if file not in self.fileList:
+                    self.fileList.append(file)
+        def printLine(self):
+            filenums = map(str, self.fileList)
+            output = f'{self.id},{self._1_0},{self._0_1},{self._1__1},{self._d__d},{self._0__0},{self._0__1},{self._1__2},{self.total},{";".join(filenums)}\n'
+            return output
+
+
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+
+    filelist = []
+    for output_path in config['Output']['output'].split(';'):
+        for item in os.listdir(output_path):
+            mergedfile = ''
+            # attempts to identify directories made by the pipeline via the timestamp in front (since things get shoved everywhere with reckless abandon)
+            output_item = os.path.join(output_path, item)
+            pattern = r'^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
+            matches = re.findall(pattern, item)
+            # skipping over T2T directories, if it meets critera for a pipeline output folder
+            if os.path.isdir(output_item) and matches and not output_item.endswith('_T2T'):
+                # here it gets the date and filepath of the N0 file within the directory for entry into the database
+                date = matches[0]
+                timestamp = datetime.strptime(date.replace('_', ' '), '%Y-%m-%d %H-%M-%S')
+                # print(date, filename)
+                mergedfile = findmergedfile(output_item, '_merged.bed')
+            
+            # if the N0 file was found
+            if mergedfile:
+                filelist.append(mergedfile)
+
+
+    current_datetime = datetime.now()
+    _formatted_datetime = current_datetime.strftime("%d-%m-%y_%H-%M-%S")
+    formatted_datetime = os.path.join('./polarpipeline/resources/frequency', _formatted_datetime)
+    os.mkdir(formatted_datetime)
+
+    variants = {}
+    filekey = {}
+    for fileindex, file in enumerate(filelist):
+        print(os.path.basename(file))
+        frequency_progress = (fileindex+1)/len(filelist)
+        if file not in filekey:
+            filekey[file] = fileindex
+        colkey = {}
+        for row in open(file):
+            line = row.strip().split('\t')
+            if row.startswith('#'):
+                for index, col in enumerate(line):
+                    colkey[col] = index
+                continue
+            id = f'{line[colkey["#CHROM"]]}_{line[colkey["POS"]]}_{line[colkey["REF"]]}/{line[colkey["ALT"]]}'
+            if id in variants:
+                variants[id].updateCount(line[colkey['GT']], fileindex)
+            else:
+                variant = Variant(id, line[colkey['GT']], fileindex)
+                variants[id] = variant
+
+        with open(f'{formatted_datetime}/variantCatalogue.tsv', 'w') as opened:
+            for variant in variants:
+                opened.write(variants[variant].printLine())
+
+        with open(f'{formatted_datetime}/fileKey.tsv', 'w') as opened:
+            for file in filekey:
+                opened.write(f'{file}\t{filekey[file]}\n')
+    return 'success'
+
+
 
 # returns a dictionary of assumed data types for a given file in 'merged file' format (tab separated, 1st row = header)
 def imputeColTypes(input, new_cols):
@@ -2136,7 +2294,7 @@ def search(numperpage=10, page=0):
                     date = matches[0]
                     timestamp = datetime.strptime(date.replace('_', ' '), '%Y-%m-%d %H-%M-%S')
                     # print(date, filename)
-                    mergedfile = findmergedfile(output_item)
+                    mergedfile = findmergedfile(output_item, 'merged_N0.bed')
                 
                 # if the N0 file was found
                 if mergedfile:
