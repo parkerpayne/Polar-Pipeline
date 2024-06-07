@@ -79,7 +79,7 @@ def update_db(id, col, value):
 # path to config file, the one that configuration page gets its values from and updates
 CONFIG_FILE_PATH = './polarpipeline/resources/config.ini'
 # path to the figure generator's preset file. it just stores any presets that might have been saved
-FIGURE_PRESETS_CONFIG = './polarpipeline/resources/presets.ini'
+FIGURE_PRESETS_CONFIG = './polarpipeline/static/presets.ini'
 
 base_path = '/mnt'
 def alphabetize(item):
@@ -232,7 +232,6 @@ def upload(filetype):
         with zipfile.ZipFile(os.path.join(save_directory, file_name), 'r') as zip_ref:
             zip_ref.extractall(save_directory)
         subprocess.run(['rm', os.path.join(save_directory, file_name)], cwd=save_directory)
-
     return redirect(url_for('configuration'))
 
 # route to remove any configurations that have been added
@@ -412,7 +411,7 @@ def id():
 
 # route to save the specified configuration
 # accessed through the 'save' button in the 'Define Pattern' modal
-# Patterns are saved in an array, where the order of the encoded ID is stored in teh same line as the static/omitted values separated by '|'.
+# Patterns are saved in an array, where the order of the encoded ID is stored in the same line as the static/omitted values separated by '|'.
 @app.route('/save_pattern', methods=['POST'])
 def save_pattern():
     data = request.get_json()
@@ -554,34 +553,31 @@ def add_computer():
 # accessed by the save button in any dropdown section
 @app.route('/save_configuration', methods=['POST'])
 def save_configuration():
-    if request.method == 'POST':
-        computer_name = request.form['computer_name']
-        config_values = {}
+    computer_name = request.form['computer_name']
+    config_values = {}
 
-        print(request.form)
+    # iterates through the keys in the request that will be saved
+    for key in request.form:
+        print(key)
+        if key != 'computer_name':
+            value = request.form[key]
+            print(value)
+            if value.lower() == 'true':
+                value = True
+            elif value.lower() == 'false':
+                value = False
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass  # Keep the value as a string
 
-        # iterates through the keys in the request that will be saved
-        for key in request.form:
-            print(key)
-            if key != 'computer_name':
-                value = request.form[key]
-                print(value)
-                if value.lower() == 'true':
-                    value = True
-                elif value.lower() == 'false':
-                    value = False
-                else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        pass  # Keep the value as a string
+            config_values[key] = value
 
-                config_values[key] = value
+    # runs function to save the section
+    save_config(computer_name, config_values)
 
-        # runs function to save the section
-        save_config(computer_name, config_values)
-
-    return redirect(url_for('configuration'))
+    return 'success'
 
 # route to remove a worker configuration
 # accessed from the delete button in the worker configuration dropdowns
@@ -2172,7 +2168,6 @@ def makefrequency():
             output = f'{self.id},{self._1_0},{self._0_1},{self._1__1},{self._d__d},{self._0__0},{self._0__1},{self._1__2},{self.total},{";".join(filenums)}\n'
             return output
 
-
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE_PATH)
 
@@ -2234,34 +2229,11 @@ def makefrequency():
 
 
 
-# returns a dictionary of assumed data types for a given file in 'merged file' format (tab separated, 1st row = header)
-def imputeColTypes(input, new_cols):
-    colindex = {}
-    cols = {}
-    for lineindex, line in enumerate(open(input, 'r')):
-        variant = line.strip().split('\t')
-        if 'CHROM' in variant[0]:
-            for index, col in enumerate(variant):
-                if col.replace('#', '') in new_cols:
-                    # assume everything is a number
-                    cols[col.replace('#', '')] = 'num'
-                    colindex[col.replace('#', '')] = index
-            continue
-        for col in colindex:
-            value = variant[colindex[col]]
-            if value in ['-', '.']:
-                value = ''
-            if value == '':
-                continue
-            # try casting to a number. if it doesnt work, its text
-            if cols[col] == 'num':
-                try:
-                    _ = float(value)
-                except ValueError:
-                    cols[col] = 'str'
-    return cols
-
-
+def getOutputs(config):
+    outputs = []
+    for item in config['Output']['output'].strip().split(';'):
+        outputs.append(item)
+    return outputs
 
 # updated to automatically search in the output directories and add any N0 files it finds to the database
 # database schema is one for N0 files, another for the possible column values, and one more to define what columns are in what files
@@ -2273,103 +2245,23 @@ def search(numperpage=10, page=0):
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE_PATH)
 
-    # to avoid undeclared variables if big try fails
-    available_dbs = []
+    N0s = {}
     columns = []
-    try:
-        conn = psycopg2.connect(**db_config)
-        cursor = conn.cursor()
-
-        # iterate through output directories 
-        for output_path in config['Output']['output'].split(';'):
-            for item in os.listdir(output_path):
-                mergedfile = ''
-                # attempts to identify directories made by the pipeline via the timestamp in front (since things get shoved everywhere with reckless abandon)
-                output_item = os.path.join(output_path, item)
-                pattern = r'^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
-                matches = re.findall(pattern, item)
-                # skipping over T2T directories, if it meets critera for a pipeline output folder
-                if os.path.isdir(output_item) and matches and not output_item.endswith('_T2T'):
-                    # here it gets the date and filepath of the N0 file within the directory for entry into the database
-                    date = matches[0]
-                    timestamp = datetime.strptime(date.replace('_', ' '), '%Y-%m-%d %H-%M-%S')
-                    # print(date, filename)
-                    mergedfile = findmergedfile(output_item, 'merged_N0.bed')
-                
-                # if the N0 file was found
-                if mergedfile:
-                    # this sql attempts to enter the 'found' file in the database.
-                    # if the filename is not yet in the database, it returns the ID
-                    cursor.execute("""
-                            INSERT INTO dbs (date_time, filename, filepath)
-                            VALUES (%s, %s, %s)
-                            ON CONFLICT DO NOTHING
-                            RETURNING uid
-                        """, (timestamp, item, mergedfile))
-                    new_uid_row = cursor.fetchone()
-                    # a returned ID indicates that the file is new, so the columns in the file need to be added to the database
-                    if new_uid_row:
-                        db_uid = new_uid_row[0]
-                        conn.commit()
-                        # grab the first row (header) and make a list of the columns in the file
-                        for line in open(mergedfile, 'r'):
-                            file_cols = [x.replace('#', '') for x in line.strip().split('\t') if 'MERGED' not in x]
-                            if item in file_cols: file_cols.remove(item)
-                            break
-                        
-                        # the commented block below is for a less thorough but faster method of getting the columns in the files
-                        # it skips finding the data types for columns already in the database
-                        # it should realistically be fine to use if things are slow but its possible for it to miss something
-
-                        print('getting types for', item)
-                        # cursor.execute("SELECT col_name FROM cols")
-                        # cols_in_db = [x[0] for x in cursor.fetchall()]
-                        # cols_to_add = [x for x in file_cols if x not in cols_in_db]
-                        # if cols_to_add:
-                        #     new_cols_types = imputeColTypes(mergedfile, cols_to_add)
-                        new_cols_types = imputeColTypes(mergedfile, file_cols)
-
-                        # using the found datatypes, it attempts to enter each column into the database.
-                        # if it already exists, its possible the datatype needs to change. if it is currently a number,
-                        # and the inputeColTypes function says its a str, it changes to a str. otherwise it stays
-                        for col_name, col_type in new_cols_types.items():
-                            sql = """
-                            INSERT INTO cols (col_name, col_type)
-                            VALUES (%s, %s)
-                            ON CONFLICT (col_name) DO UPDATE
-                            SET col_type = CASE
-                                WHEN cols.col_type = 'num' AND %s = 'str' THEN %s
-                                ELSE cols.col_type
-                                END;
-                            """
-                            cursor.execute(sql, (col_name, col_type, col_type, col_type, col_type))
-                        conn.commit()
-
-                        # now, we need to enter every column into the relation table to be able to identify what columns are in what files
-                        cursor.execute("SELECT col_name, uid FROM cols")
-                        col_uids = cursor.fetchall()
-                        for col_name, col_uid in col_uids:
-                            cursor.execute("INSERT INTO db_cols (db_uid, col_uid) VALUES (%s, %s)", (db_uid, col_uid))
-                        conn.commit()
-        
-        # retrieve files from the database
-        cursor.execute("SELECT filename FROM dbs ORDER BY date_time")
-        available_dbs = [x[0] for x in cursor.fetchall()]
-        # retrieve columns from the database for the autofill on the frontend
-        cursor.execute("SELECT col_name FROM cols ORDER BY uid")
-        columns = [x[0] for x in cursor.fetchall()]
-
-
-    except Exception as e:
-        conn.rollback()
-        print(f'Error: {e}')
-    finally:
-        cursor.close()
-        conn.close()
+    for path in getOutputs(config):
+        for file in os.listdir(path):
+            if os.path.isdir(os.path.join(path, file)):
+                found_N0 = findmergedfile(os.path.join(path, file), '_N0.bed')
+                if found_N0:
+                    for line in open(found_N0):
+                        for item in line.strip().split('\t'):
+                            if item not in columns:
+                                columns.append(item)
+                        break
+                    N0s[file] = found_N0
 
     # finds a preexisting search result file
     filename = ''
-    for file in os.listdir('./polarpipeline/resources/search/'):
+    for file in os.listdir('./polarpipeline/search/'):
         if file.endswith('_search_result.tsv'):
             filename = file
             continue
@@ -2380,14 +2272,14 @@ def search(numperpage=10, page=0):
     lines = []
     numresults = -1
     if filename != '':
-        for index, line in enumerate(open(os.path.join('./polarpipeline/resources/search', filename), 'r')):
+        for index, line in enumerate(open(os.path.join('./polarpipeline/search', filename), 'r')):
             numresults += 1
             if not index > numperpage*(page+1):
                 lines.append(line.strip())
         try:
             result.append(lines[0].split('\t'))
         except: 
-            result.append(columns)
+            result.append('')
         for i in range(page*numperpage+1, page*numperpage+numperpage+1):
             try:
                 result.append(lines[i].split('\t'))
@@ -2401,7 +2293,48 @@ def search(numperpage=10, page=0):
     if page != 0:
         prevpage = page-1
     
-    return render_template('search.html', available_dbs=available_dbs, columns=columns, result=result, numresults=numresults, numperpage=numperpage, page=page, prevpage=prevpage, nextpage=nextpage)
+    return render_template('search.html', available_dbs=sorted([x for x in N0s]), paths=N0s, columns=columns, result=result, numresults=numresults, numperpage=numperpage, page=page, prevpage=prevpage, nextpage=nextpage)
+
+class Parameter:
+    def __init__(self, column, operator, value, NAs):
+        # print(column, operator, value)
+        self.column = column
+        self.operator = operator
+        self.value = value
+        self.NAs = bool(NAs)
+
+    def compare(self, comp_value):
+        if comp_value in ['-', '.', '']:
+            if self.NAs:
+                return True
+            return False
+        match self.operator:
+            case '>':
+                return float(comp_value) > float(self.value)
+            case '<':
+                return float(comp_value) < float(self.value)
+            case '>=':
+                return float(comp_value) >= float(self.value)
+            case '<=':
+                return float(comp_value) <= float(self.value)
+            case '==':
+                return str(comp_value) == str(self.value)
+            case '!=':
+                return str(comp_value) != str(self.value)
+            case 'Contains':
+                return str(self.value) in str(comp_value)
+
+def get_array_length(data):
+    if not data:
+        return 0
+    first_key = next(iter(data))
+    array_length = len(data[first_key])
+    return array_length
+
+
+def contains_date_pattern(s):
+    pattern = r'\d{4}-\d{2}-\d{2}'
+    return bool(re.search(pattern, s))
 
 # initialization of some things for the search progress bar. used to check if the user cancelled, sets the color, and percent completion
 progress = 1
@@ -2423,164 +2356,87 @@ def beginsearch():
     color = 'blue'
     progress = 0
     files = request.json.get("files")
-    parameters = request.json.get("params")
+    parameters = [Parameter(x[0], x[2], x[1], x[3]) for x in request.json.get("params")]
     remainingsearchtime['minutes'] = '--'
     remainingsearchtime['seconds'] = '--'
     deltas = []
 
+    print(parameters[0].column, parameters[0].operator, parameters[0].value)
+    print(files)
+
     # finds number of 'steps' for progress calculation
     # total_steps = len(files) * len(parameters)
-
-    
-
     # creates search result filename 
     searchname = f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_search_result.tsv'
-
     try:
-        conn = psycopg2.connect(**db_config)
-        cursor = conn.cursor()
-
-        # gets paths for all files being searched from database
-        cursor.execute("SELECT filepath FROM dbs WHERE filename IN %s", (tuple(files),))
-        filepaths = [x[0] for x in cursor.fetchall()]
-
-        # this thing is why i did the databases the way i did, it lets me immediately get all columns in the final output file as well as their datatypes
-        # very very fast compared to what i was doing before
-        sql = """
-            SELECT DISTINCT c.col_name, c.col_type, c.uid 
-            FROM cols c
-            JOIN db_cols dc ON c.uid = dc.col_uid
-            JOIN dbs d ON dc.db_uid = d.uid
-            WHERE d.filename IN %s 
-            ORDER BY c.uid
-            """
-        cursor.execute(sql, (tuple(files),))
-        cols_types = [(x[0], x[1]) for x in cursor.fetchall()]
-        columns = [x[0] for x in cols_types]
-        header = "\t".join(columns) + '\tSOURCE\n'
-
-        # creates a dict for getting the types of each column
-        _type = {}
-        for colname, coltype in cols_types:
-            match coltype:
-                case 'num':
-                    _type[colname] = float
-                case 'str':
-                    _type[colname] = str
-
-        # print(parameters)
-
+        search_result = {'SOURCE': []}
         # finds and removes old search file
-        for file in os.listdir('./polarpipeline/resources/search'):
-            if file.endswith('_search_result.tsv'):
-                os.remove(os.path.join('./polarpipeline/resources/search', file))
-        # opens new search file and writes header
-        with open(f'./polarpipeline/resources/search/{searchname}', 'w') as opened:
-            opened.write(header)
-            # iterates through all files to be searched
-            _time = time.time()
-            for fileindex, file in enumerate(filepaths):
-                print(file)
-                get_index = {}
-                # iterates through the rows in the file
-                for row in open(file):
-                    # converts the row into an array
-                    line = [x.replace('#', '') for x in row.strip().split('\t')]
-                    # if row is header, creates an index of every column in the file
-                    if 'CHROM' in line[0]:
-                        for i, colname in enumerate(line):
-                            get_index[colname] = i
+
+        # iterates through all files to be searched
+        _time = time.time()
+        rows=0
+        for fileindex, file in enumerate(files):
+            # print(file)
+            cols = {}
+            for line in open(file):
+                variant = line.strip().split('\t')
+                if line[:5] in ['#CHRO', 'CHROM']:
+                    if not cols:
+                        for colindex, col in enumerate(variant):
+                            if not contains_date_pattern(col):
+                                cols[col] = colindex
+                                if col not in search_result:
+                                    search_result[col] = ['-' for _ in range(rows)]
+                    continue
+                valid = True
+                for param in parameters:
+                    if not valid:
                         continue
-                    # for the search, this is the main portion that actually does the filtering. It works by negation, meaning the rows are assumed to be
-                    # included in the final output until proven otherwise. there are a few different ways to disqualify a row, which i will touch on
-                    valid = True
-                    for paramindex, param in enumerate(parameters):
-                        # updates every 50,000 rows as to not flood the console if you want to print it
-                        # if paramindex % 50000 == 0:
-                        # progress = ((fileindex+1) * (paramindex+1))/total_steps
-                        
-                        # col is column with the value to compare, bar is the value being compared against, operator is operator. nas is whether to include N/As or not.
-                        # true is include them, false is leave them out
-                        col = param[0]
-                        bar = param[1]
-                        operator = param[2]
-                        nas = bool(param[3])
-                        
-                        if col in get_index:
-                            index = get_index[col]
-                            value = line[index]
-                            datatype = _type[col]
-                            # i seriously dont think this if else does anything since i switched to the database but it doesnt hurt anything
-                            if not datatype:
-                                if nas:
-                                    continue
-                                else:
-                                    valid = False
-                            # sets these values to N/A
-                            if value in ['-', '.']:
-                                value = ''
-                            # if N/A and N/A's allowed, continue because we don't need to keep checking against other parameters
-                            if value == '' and nas:
-                                continue
-                            # perform negated comparison, if true, disqualify row (aka if condition is met, we move to next parameter)
-                            match operator:
-                                case '==':
-                                    if datatype(value) != datatype(bar):
-                                        valid = False
-                                case '>=':
-                                    if datatype(value) < datatype(bar):
-                                        valid = False
-                                case '<=':
-                                    if datatype(value) > datatype(bar):
-                                        valid = False
-                                case '>':
-                                    if datatype(value) <= datatype(bar):
-                                        valid = False
-                                case '<':
-                                    if datatype(value) >= datatype(bar):
-                                        valid = False
-                                case '!=':
-                                    if datatype(value) == datatype(bar):
-                                        valid = False
-                                case 'Contains':
-                                    if str(bar) not in str(value):
-                                        valid = False
-                        else:
+                    if not param.column in cols:
+                        valid = False
+                        continue
+                    else:
+                        if not param.compare(variant[cols[param.column]]):
+                            if 'PA' in variant[cols[param.column]]:
+                                print(variant[cols[param.column]])
                             valid = False
-                        # if user cancels, exit the search and make bar red for some feedback
-                        if cancelled:
-                            color = 'red'
-                            return 'cancelled'
-                    # if row was not disqualified, builds a line called bob (the builder) using the row.
-                    # needs to be like this in case the order of columns is different than in this file
-                    if valid:
-                        bob = []
-                        for col in columns:
-                            if col in get_index:
-                                bob.append(line[get_index[col]])
+                            continue
+                if valid:
+                    for col in search_result:
+                        if col == 'SOURCE':
+                            search_result['SOURCE'].append(file)
+                        else:
+                            if col in cols:
+                                search_result[col].append(variant[cols[col]])
                             else:
-                                bob.append('-')
-                        opened.write('\t'.join(bob)+f'\t{file}\n')
-                currtime = time.time()
-                deltas.append((currtime - _time))
-                seconds_remaining = sum(deltas)/len(deltas) * (len(files) - (fileindex + 1))
-                _time = currtime
-                remainingsearchtime['minutes'] = seconds_remaining // 60
-                remainingsearchtime['seconds'] = int(seconds_remaining % 60)
-                progress = (fileindex+1)/len(files)
-
-
+                                search_result[col].append('-')
+                rows +=1
+            currtime = time.time()
+            deltas.append((currtime - _time))
+            seconds_remaining = sum(deltas)/len(deltas) * (len(files) - (fileindex + 1))
+            _time = currtime
+            remainingsearchtime['minutes'] = seconds_remaining // 60
+            remainingsearchtime['seconds'] = int(seconds_remaining % 60)
+            progress = (fileindex+1)/len(files)
+        for file in os.listdir('./polarpipeline/search'):
+            if file.endswith('_search_result.tsv'):
+                os.remove(os.path.join('./polarpipeline/search', file))
+        # opens new search file and writes header
+        with open(f'./polarpipeline/search/{searchname}', 'w') as opened:
+            opened.write('\t'.join([x for x in search_result if x != 'SOURCE'] + ['SOURCE'])+'\n')
+            for i in range(get_array_length(search_result)):
+                row = []
+                for col in search_result:
+                    if col != 'SOURCE':
+                        row.append(search_result[col][i])
+                row.append(search_result['SOURCE'][i])
+                opened.write('\t'.join(row)+'\n')
     # in case something breaks
     except Exception as e:
         print(e)
-        conn.rollback
-        conn.close()
         progress = 1
         color = 'yellow'
         return 'cancelled'
-
-    # made it out
-    print('outta there')
 
     # complete progress, green bar, success is supposed to refresh the page in the javascript but it is inconsistent idk how 
     progress = 1
@@ -2603,9 +2459,9 @@ def searchprogress():
 def search_download():
     print('in download')
     filename = ''
-    for file in os.listdir('./polarpipeline/resources/search'):
+    for file in os.listdir('./polarpipeline/search'):
         if file.endswith('_search_result.tsv'):
-            return send_file(f'/usr/src/app/polarpipeline/resources/search/{file}', as_attachment=True)
+            return send_file(f'/usr/src/app/polarpipeline/search/{file}', as_attachment=True)
     return send_file(os.path.join(filename), as_attachment=True)
 
 # just sets cancelled to true, main searchbegin function finds its dead body
@@ -2656,7 +2512,7 @@ def qc(path=None):
         qc_path = full_path
         print(full_path)
         expected_variants = {}
-        for row in open('./polarpipeline/resources/InternalBenchmarkList.txt'):
+        for row in open('./polarpipeline/static/InternalBenchmarkList.txt'):
             variant, rs = row.strip().split('\t')
             expected_variants[variant] = rs
         found_variants = []
@@ -2782,11 +2638,11 @@ def filesearchbegin():
                 except:
                     columnType[col] = str
     # actually DO COMPARISONS, remove old search result
-    for old_file in os.listdir('./polarpipeline/resources/search'):
+    for old_file in os.listdir('./polarpipeline/search'):
         if old_file.endswith('_filesearch_result.tsv'):
-            os.remove(os.path.join('/usr/src/app/polarpipeline/resources/search', old_file))
+            os.remove(os.path.join('/usr/src/app/polarpipeline/search', old_file))
     # open new search result
-    with open(os.path.join('/usr/src/app/polarpipeline/resources/search', searchname), 'w') as opened:
+    with open(os.path.join('/usr/src/app/polarpipeline/search', searchname), 'w') as opened:
         opened.write(header)
         foundHeader = False
         for row in open(file, 'r'):
@@ -2844,9 +2700,9 @@ def filesearchbegin():
 def filesearchpreview():
     file = ''
     # finds a filesearch file in the search directory
-    for thing in os.listdir('/usr/src/app/polarpipeline/resources/search'):
+    for thing in os.listdir('/usr/src/app/polarpipeline/search'):
         if thing.endswith('_filesearch_result.tsv'):
-            file = os.path.join('/usr/src/app/polarpipeline/resources/search',thing)
+            file = os.path.join('/usr/src/app/polarpipeline/search',thing)
             break
     first = True
     filename = ''
@@ -2866,7 +2722,7 @@ def filesearchpreview():
             # returns the 50 preview lines to the page
             return render_template('filesearchpreview.html', header=header, filecontents=filecontents, numlines=len(filecontents), filename=filename)
     # if more than 50 lines, returns all the lines
-    return render_template('filesearchpreview.html', header=header, filecontents=filecontents)
+    return render_template('filesearchpreview.html', header=header, filecontents=filecontents, numlines=len(filecontents), filename=filename)
 
 # route to download the file search result
 # accessed by the download button on the filesearchpreview page
@@ -2874,10 +2730,10 @@ def filesearchpreview():
 def filesearchdownload():
     # logging
     print('in download')
-    directory = '/usr/src/app/polarpipeline/resources/search'
+    directory = '/usr/src/app/polarpipeline/search'
     filename=''
     # finds the filesearch result file
-    for file in os.listdir('/usr/src/app/polarpipeline/resources/search'):
+    for file in os.listdir('/usr/src/app/polarpipeline/search'):
         if file.endswith('_filesearch_result.tsv'):
             filename = os.path.join(directory, file)
     # delivers the file to the user

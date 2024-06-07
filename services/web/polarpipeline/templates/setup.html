@@ -126,7 +126,7 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>sudo apt install pigz<br>sudo apt install bedtools<br>sudo apt install tabix<br>sudo apt install celery<br>sudo apt install nfs-common<br>pip install psycopg2-binary<br>pip install bs4<br>sudo cpan DBI<br>sudo cpan Math::CDF<br>sudo cpan List::MoreUtils</code>
+                            <code>sudo apt install -y pigz bedtools tabix celery nfs-common python3-pip<br>pip install psycopg2-binary bs4<br>sudo cpan DBI Math::CDF List::MoreUtils</code>
                         </div>
                     </div>
                 </div>
@@ -285,12 +285,5 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-        function updateFileLabel(input) {
-            var fileName = input.files[0].name;
-            var label = input.nextElementSibling;
-            label.textContent = fileName;
-        }
-    </script>
 </body>
 </html>

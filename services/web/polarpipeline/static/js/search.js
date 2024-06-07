@@ -108,6 +108,7 @@ function deleteFeature(num) {
     featureToRemove.remove()
 }
 function submitSearch(){
+    check_progress();
     const pbar = document.getElementById("progressbar");
     if(pbar.classList.contains("bg-danger")){
         pbar.classList.remove("bg-danger");
@@ -221,6 +222,11 @@ function check_progress() {
             progressBar.innerText = (progress.progress * 100).toFixed(0) + "%";
             timebtn.innerText = "Remaining: " + formattedTime
             console.log("Remaining: " + formattedTime);
+            if(progress.progress == 1){
+                $('#cancelSearch').hide();
+            }else{
+                $('#cancelSearch').show();
+            }
             if(progressBar.classList.contains("bg-success")){
                 progressBar.classList.remove("bg-success");
             }
@@ -252,7 +258,23 @@ function check_progress() {
         });
     setTimeout(check_progress, 1000);
 }
-check_progress();
+fetch('/searchprogress')
+    .then(response => response.json())
+    .then(progress => {
+        console.log(progress);
+
+        // Show or hide progress container based on progress value
+        if (progress.progress !== 1) {
+            check_progress();
+        }else{
+            $('#cancelSearch').hide();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
+
 function selection(instruction) {
     const checkboxes = document.querySelectorAll('.cheqbox');
     checkboxes.forEach(element => {

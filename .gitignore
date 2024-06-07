@@ -18,6 +18,8 @@
 **/vep/GCA_*
 **/.nextflow*
 **/frequency/*
+!**/.frequency-placeholder
 !**/frequency/createNewFrequency.py
 **/config.ini
 **/*.log
+**/fstab.tmp

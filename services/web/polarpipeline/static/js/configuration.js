@@ -79,8 +79,11 @@ $(document).ready(function () {
             data: config_data,
             success: function (data) {
                 // Save the open configuration name in local storage before reloading the page
-                localStorage.setItem('openConfig', computerName);
-                location.reload();
+                const notification = document.getElementById("notification");
+                notification.style.opacity = "1";
+                setTimeout(function () {
+                    notification.style.opacity = "0";
+                }, 3000);// 3000 milliseconds (3 seconds)
             },
             error: function (error) {
                 // Handle the error, if any.
@@ -88,13 +91,6 @@ $(document).ready(function () {
             }
         });
     });
-
-    // After the page reloads, open the configuration dropdown that was open before the page was reloaded
-    var openConfig = localStorage.getItem('openConfig');
-    if (openConfig) {
-        openConfigDropdown(openConfig);
-        localStorage.removeItem('openConfig'); // Clear the stored value after opening the dropdown
-    }
 });
 
 function chooseFile(inputId) {

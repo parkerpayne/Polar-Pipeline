@@ -102,7 +102,7 @@
                             {% for db in available_dbs %}
                                 <tr>
                                     <td class="table-item">
-                                        <input class="cheqbox" type="checkbox" value={{ db }} checked>
+                                        <input class="cheqbox" type="checkbox" value={{ paths[db] }} checked>
                                     </td>
                                     <td class="table-item" style="word-break: break-all;">
                                         {{ db }}
@@ -118,7 +118,7 @@
             <div class="row">
                 <div class="container">
                     <button class="btn btn-primary" style="margin-left: 1rem; margin-bottom: 1rem;" onclick="storeCurrentParams();submitSearch()">Search</button>
-                    <a class="btn btn-danger" style="margin-left: 1rem; margin-bottom: 1rem;" onclick="cancelSearch()">Cancel</a>
+                    <a class="btn btn-danger" id="cancelSearch" style="margin-left: 1rem; margin-bottom: 1rem;" onclick="cancelSearch()">Cancel</a>
                 </div>
             </div>
             
@@ -188,7 +188,6 @@
                 {% endif %}
             </div>
         </div>
-        
     </div>
 
     <div class="modal fade" id="columnModal">
@@ -221,7 +220,6 @@
           </div>
         </div>
       </div>
-
     
 
     <datalist id="columns">

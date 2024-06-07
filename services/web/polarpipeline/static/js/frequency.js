@@ -49,9 +49,9 @@ function check_progress() {
         });
     setTimeout(check_progress, 1000);
 }
-check_progress();
 
-function beginsearch(){
+function buildfrequency(){
+    check_progress();
     $.ajax({
         type: 'POST',
         url: '/makefrequency',
@@ -67,3 +67,17 @@ function beginsearch(){
         }
     }); 
 }
+
+fetch('/frequencyprogress')
+    .then(response => response.json())
+    .then(progress => {
+        console.log(progress);
+
+        // Show or hide progress container based on progress value
+        if (progress.progress !== 0) {
+            check_progress();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
