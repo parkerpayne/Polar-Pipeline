@@ -94,40 +94,40 @@ if [ ${#missing_files[@]} -gt 0 ]; then
 
     if ! command -v "vep" &> /dev/null; then
         # Step 6: Install Vep
-        echo "Installing Vep..."
-        cd ~
-        curl -L -O https://github.com/Ensembl/ensembl-vep/archive/release/112.zip
-        unzip 112.zip
-        rm 112.zip
-        cd ensembl-vep-release-112/
-        perl INSTALL.pl --NO_UPDATE --AUTO apc --PLUGINS AlphaMissense,CADD,Carol,Condel,dbNSFP,DisGeNET,EVE,LoFtool,Mastermind,pLI,PrimateAI,REVEL --SPECIES homo_sapiens,homo_sapiens_merged,homo_sapiens_refseq --ASSEMBLY GRCh38
+        # echo "Installing Vep..."
+        # cd ~
+        # curl -L -O https://github.com/Ensembl/ensembl-vep/archive/release/112.zip
+        # unzip 112.zip
+        # rm 112.zip
+        # cd ensembl-vep-release-112/
+        # perl INSTALL.pl --NO_UPDATE --AUTO apc --PLUGINS AlphaMissense,CADD,Carol,Condel,dbNSFP,DisGeNET,EVE,LoFtool,Mastermind,pLI,PrimateAI,REVEL --SPECIES homo_sapiens,homo_sapiens_merged,homo_sapiens_refseq --ASSEMBLY GRCh38
 
-        # # initialize vep-resources directory
-        cd ~
-        mkdir vep-resources
+        # # # initialize vep-resources directory
+        # cd ~
+        # mkdir vep-resources
 
-        # Alphamissense
-        cd ~/vep-resources
-        curl https://storage.googleapis.com/storage/v1/b/dm_alphamissense/o/AlphaMissense_hg38.tsv.gz?alt=media --output AlphaMissense_hg38.tsv.gz
-        tabix -s 1 -b 2 -e 2 -f -S 1 AlphaMissense_hg38.tsv.gz
+        # # Alphamissense
+        # cd ~/vep-resources
+        # curl https://storage.googleapis.com/storage/v1/b/dm_alphamissense/o/AlphaMissense_hg38.tsv.gz?alt=media --output AlphaMissense_hg38.tsv.gz
+        # tabix -s 1 -b 2 -e 2 -f -S 1 AlphaMissense_hg38.tsv.gz
 
-        # CADD
-        cd ~/vep-resources
-        wget https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz
-        wget https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz.tbi
+        # # CADD
+        # cd ~/vep-resources
+        # wget https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz
+        # wget https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz.tbi
 
-        # dbNSFP
-        cd ~/vep-resources
-        version=4.8a
-        wget https://dbnsfp.s3.amazonaws.com/dbNSFP4.8a.zip
-        unzip dbNSFP${version}.zip
-        zcat dbNSFP${version}_variant.chr1.gz | head -n1 > h
-        zgrep -h -v ^#chr dbNSFP${version}_variant.chr* | sort -k1,1 -k2,2n - | cat h - | bgzip -c > dbNSFP${version}_grch38.gz
-        tabix -s 1 -b 2 -e 2 dbNSFP${version}_grch38.gz
+        # # dbNSFP
+        # cd ~/vep-resources
+        # version=4.8a
+        # wget https://dbnsfp.s3.amazonaws.com/dbNSFP4.8a.zip
+        # unzip dbNSFP${version}.zip
+        # zcat dbNSFP${version}_variant.chr1.gz | head -n1 > h
+        # zgrep -h -v ^#chr dbNSFP${version}_variant.chr* | sort -k1,1 -k2,2n - | cat h - | bgzip -c > dbNSFP${version}_grch38.gz
+        # tabix -s 1 -b 2 -e 2 dbNSFP${version}_grch38.gz
 
         # EVE
         cd ~/vep-resources
-        wget https://evemodel.org/api/proteins/bulk/download/
+        wget -O EVE_all_data.zip https://evemodel.org/api/proteins/bulk/download/
         unzip EVE_all_data.zip
         rm EVE_all_data.zip
         DATA_FOLDER=./vcf_files_missense_mutations
@@ -147,13 +147,13 @@ if [ ${#missing_files[@]} -gt 0 ]; then
         tabix ${OUTPUT_FOLDER}/${OUTPUT_NAME}.gz;
         rm -r $DATA_FOLDER
 
-        # LoFtool
-        cd ~/vep-resources
-        wget https://raw.githubusercontent.com/Ensembl/VEP_plugins/release/112/LoFtool_scores.txt
+        # # LoFtool
+        # cd ~/vep-resources
+        # wget https://raw.githubusercontent.com/Ensembl/VEP_plugins/release/112/LoFtool_scores.txt
 
-        # pLI
-        cd ~/vep-resources
-        wget https://raw.githubusercontent.com/Ensembl/VEP_plugins/release/112/pLI_values.txt
+        # # pLI
+        # cd ~/vep-resources
+        # wget https://raw.githubusercontent.com/Ensembl/VEP_plugins/release/112/pLI_values.txt
 
         # PrimateAI
         # mail: u250951@bcm.edu
@@ -163,18 +163,18 @@ if [ ${#missing_files[@]} -gt 0 ]; then
         # https://developer.basespace.illumina.com/docs/content/documentation/authentication/obtaining-access-tokens
 
         # REVEL
-        cd ~/vep-resources
-        wget https://www.google.com/url?q=https%3A%2F%2Frothsj06.dmz.hpc.mssm.edu%2Frevel-v1.3_all_chromosomes.zip&sa=D&sntz=1&usg=AOvVaw2DS2TWUYl__0vqijzzxp5M
-        unzip revel-v1.3_all_chromosomes.zip
-        cat revel_with_transcript_ids | tr "," "\t" > tabbed_revel.tsv
-        sed '1s/.*/#&/' tabbed_revel.tsv > new_tabbed_revel.tsv
-        bgzip new_tabbed_revel.tsv
-        rm revel-v1.3_all_chromosomes.zip
+        # cd ~/vep-resources
+        # wget https://rothsj06.dmz.hpc.mssm.edu/revel-v1.3_all_chromosomes.zip
+        # unzip revel-v1.3_all_chromosomes.zip
+        # cat revel_with_transcript_ids | tr "," "\t" > tabbed_revel.tsv
+        # sed '1s/.*/#&/' tabbed_revel.tsv > new_tabbed_revel.tsv
+        # bgzip new_tabbed_revel.tsv
+        # rm revel-v1.3_all_chromosomes.zip
 
-        cd ~
-        VEP_DIR=~/ensembl-vep-release-112/
-        echo "PATH=\"$VEP_DIR:\$PATH\"" >> ~/.bashrc
-        eval "$(cat ~/.bashrc | tail -n +10)"
+        # cd ~
+        # VEP_DIR=~/ensembl-vep-release-112/
+        # echo "PATH=\"$VEP_DIR:\$PATH\"" >> ~/.bashrc
+        # eval "$(cat ~/.bashrc | tail -n +10)"
 
     fi
     if ! command -v "vep" &> /dev/null; then

@@ -18,6 +18,34 @@ document.addEventListener("DOMContentLoaded", function () {
     graphs();
 });
 
+function submitForm() {
+    // Get the file input element
+    var fileInput = document.getElementById('fileInput');
+    
+    // Check if a file is selected
+    if (fileInput.files.length == 0) {
+        alert('Please select a file.');
+        return;
+    }
+    
+    // Submit the form
+    var formData = new FormData(document.getElementById('importForm'));
+    fetch('/importProgress', {
+        method: 'POST',
+        body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            if (data.error) {
+                console.error(data.error);
+            } else {
+                location.reload();
+            }
+        })
+    .catch(error => console.error('Error:', error));
+}
+
 function handleDeleteClick(rowId) {
     const modalVal = document.getElementById("deleteItemModal");
     modalVal.value = rowId;

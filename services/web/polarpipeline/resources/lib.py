@@ -17,7 +17,7 @@ def whoami():
 setup_parser = configparser.ConfigParser()
 setup_parser.read('/mnt/pipeline_resources/config.ini')
 ip = setup_parser['Network']['host_ip']
-password = setup_parser[whoami()]['password']
+password = 'Epididymis0!'
 
 #  __          ________ ____      _____ ______ _______      ________ _____                                             
 #  \ \        / /  ____|  _ \    / ____|  ____|  __ \ \    / /  ____|  __ \                                            

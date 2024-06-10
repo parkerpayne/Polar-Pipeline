@@ -27,6 +27,7 @@ import shutil
 import time
 import json
 import svg
+import csv
 import ast
 import os
 import re
@@ -247,6 +248,81 @@ def remove(removepath):
     elif os.path.isfile(full_path):
         os.remove(full_path)
     return redirect(url_for('configuration'))
+
+@app.route('/exportProgress')
+def exportprogress():
+    try:
+        # Connect to the database
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Execute your query
+        cursor.execute("SELECT * FROM progress")
+        rows = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+
+        # Write the data to a CSV file
+        formattedTime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        if not os.path.isdir('/tmp/pipeline_export'):
+            os.mkdir('/tmp/pipeline_export')
+        for file in os.listdir('/tmp/pipeline_export'):
+            os.remove(os.path.join('/tmp/pipeline_export', file))
+        export_file = f'/tmp/pipeline_export/{formattedTime}_pipeline_history.csv'
+        with open(export_file, 'w', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(column_names)  # Write the header
+            csvwriter.writerows(rows)  # Write the data
+
+        # Close the database connection
+        cursor.close()
+        conn.close()
+
+        # Send the file to the client
+        return send_file(export_file, as_attachment=True)
+    except Exception as e:
+        conn.rollback()
+        return f"Error: {e}"
+    
+@app.route('/importProgress', methods=['POST'])
+def importprogress():
+    try:
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part in the request"}), 400
+
+        file = request.files['file']
+
+        # If the user does not select a file, the browser may submit an empty part without filename
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        # Save the file to the /tmp/pipeline_export directory
+        file_path = os.path.join('/tmp/pipeline_export', file.filename)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        file.save(file_path)
+
+        # Connect to the database
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Use COPY FROM to import data from the CSV file
+        with open(file_path, 'r') as f:
+            cursor.copy_expert("COPY progress FROM STDIN WITH CSV HEADER", f)
+
+        # Commit the transaction
+        conn.commit()
+
+        # Close the database connection
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Data imported successfully."}), 200
+
+    except Exception as e:
+        if conn and not conn.closed:
+            conn.rollback()
+        return jsonify({"error": str(e)}), 500
+
 
 # route for the dashboard
 @app.route('/dashboard')
@@ -1259,7 +1335,7 @@ def handle_request_file(worker_name):
                 socketio.sleep(0.1)
                 continue
             # this if blocks all the repetitive lines that get spammed like the nextflow pipeline output as well as the vep warning lines
-            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR'):
+            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR') and not line.startswith('Use of uni'):
                 socketio.emit(event_name, line)
 
 # route that cancels a job by setting the signal to stop in the database. worker should periodically check this and if the signal is set to cancelled it should stop
