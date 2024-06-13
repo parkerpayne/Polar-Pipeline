@@ -49,29 +49,32 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 
 ## Installation
 ##### Polar Pipeline setup:
-This pipeline was developed and tested on Ubuntu. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows host, but in depth knowledge will be required to set up.
-1. Install Docker on the to-be host machine.
+This pipeline was developed and tested on Ubuntu 22.04. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows environment, but modifications to the code will be required.
 
-2. Download the repository to the host machine.
 
-3. In the server's ```.../polar-pipeline/mnt/```, establish new directories for both input and output locations. Utilize NFS or symbolic links to grant accessibility to these locations from the server's ```mnt/``` directory, which might necessitate the installation of ```nfs-server``` and ```nfs-common```. Ensure replication of this directory structure, including NFS and symbolic links, within all workers' ```/mnt/``` directory. Refer to the provided directory structure diagram for clarity. ![Directory Structure Diagram](./misc/directorystruc.jpg)
+1. In the host computer's ```/mnt``` directory, establish new directories for both input and output locations. Utilize NFS to grant accessibility to these locations from the host computer's ```mnt/``` directory, which will necessitate the installation of ```nfs-common```. Ensure replication of this directory structure, including NFS, within all workers' ```/mnt/``` directory. Refer to the provided directory structure diagram for clarity. ![Directory Structure Diagram](./misc/directorystruc.jpg)
 
-4. Inside ```.../polar-pipeline/services/web/polarpipeline/resources/```, rename the file ```config.ini.example``` to ```config.ini```.
+2. Clone the repository to the home directory (or download as zip and unzip into home directory) on the host computer.
 
-5. Run ```sudo docker compose up -d``` in the repository directory. (the directory containing docker-compose.yaml)
+3. ```cd``` into the repository directory (```~/polar-pipeline```) on the host computer.
 
-6. The Polar Pipeline will build and begin hosting. The site on the host machine is accessible at ```localhost:5000```. Other machines on the same network will use the local ip of the host rather than ```localhost```. The local IP is visible by running ```hostname -I | awk '{print $1}'``` on the host machine.
+4. On the host computer, from inside the ```~/polar-pipeline``` directory, make the ```start-server.sh``` script executable by running ```chmod +x start-server.sh```.
 
-7. In the configuration, set the output directories as viewed by the workers, the host IP, thread counts for workers, and upload reference, gene source files, bed files, etc.
+5. Run the script using ```./start-server.sh``` from inside ```~/polar-pipeline``` on the host computer. All dependencies will begin downloading and installing. Once this is complete, the user will be prompted to restart the computer.
 
-8. Create worker machines following the instructions in the setup page on the Polar Pipeline website.
+6. ```cd``` back into ```~/polar-pipeline``` on the host computer, and execute ```./start-server.sh``` again. Assuming nothing failed, the Polar Pipeline will build and begin hosting. The site on the host machine is accessible at ```localhost:5000```. To access the page from other devices on the same network, use the local ip of the host computer rather than ```localhost```. The local IP is visible by running ```hostname -I | awk '{print $1}'``` on the host computer.
+
+7. Follow instructions on the Setup tab to create workers.
+
+8. From the File Select tab, select either ```.fastq``` or ```.bam``` files, set options, and hit start. The data will be processed and you will recieve a structured output folder at your desired output directory! 
 
 ##### Report Generator setup:
-1. Install vep, putting the ```ensembl-vep```, ```.vep```, and ```vep-resources``` folders inside ```.../polar-pipeline-docker/services/web/vep``` along with a ```GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta``` and index file.
+1. Install vep, putting the ```ensembl-vep```, ```.vep```, and ```vep-resources``` folders inside the ```.../polar-pipeline/services/web/vep``` directory along with a ```GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta``` and index file.
+2. Provide a ```hg38.refGene``` file in the ```.../polar-pipeline/services/web/vep``` directory. This can be found at [genome.ucsc.edu](http://genome.ucsc.edu/cgi-bin/hgTables). Select 'All Tables' on the group dropdown, and 'refGene' on the 'table' dropdown.
 
 ## Usage
-1. Place fastq, fastq.gz, or .bam files to be processed somewhere that is accessible from the Polar Pipeline's ```mnt/``` directory.
-2. Go to the configuration tab on the Polar Pipeline website, and upload needed reference files, clair models, bed files, and gene source files.
+1. Place fastq, fastq.gz, or .bam files to be processed somewhere that is accessible from the host computer's ```/mnt``` directory. (The location should also be accessible from the worker's ```/mnt``` directory.)
+2. Go to the configuration tab on the Polar Pipeline website, and upload needed reference files, clair models, bed files, and gene source files. Clair models are directories, so they will need to be zipped. Clair models can be found at [this repository](https://github.com/nanoporetech/rerio).
 3. Navigate to the processing page of the Polar Pipeline website and select the file to be processed.
 4. Make selections, including what type of sample, a bed file to intersect with, etc.
 5. Hit start, and head to the dashboard tab to view progress.
@@ -87,13 +90,12 @@ Even though the programs are not included in this repository, the following tool
 - [Varient Effect Predictor](https://ensembl.org/vep)
 
 #### How to Contribute
-1. **Bug Reports:** If you encounter any bugs or issues while using the Polar Pipeline, please consider opening an issue on our GitHub repository to document the problem. While fixes may not be actively implemented, this can help other users who encounter similar issues in the future.
+1. **Bug Reports:** If you encounter any bugs or issues while using the Polar Pipeline, please consider opening an issue to document the problem. While fixes may not be actively implemented, this can help other users who encounter similar issues in the future.
 2. **Pull Requests:** While I may not regularly review or merge pull requests, you're welcome to submit them if you've made improvements or modifications to the Polar Pipeline that you'd like to share.
 
 #### Contributing Code
 1. Fork the repository and create a new branch for your modifications or enhancements.
-2. Make your changes, ensuring that they align with the project's goals and objectives.
-3. Submit a pull request with your changes, providing a brief description of the modifications you've made.
+2. Submit a pull request with your changes, providing a brief description of the modifications you've made.
 
 I appreciate any contributions made to the Polar Pipeline project, whether it's reporting issues or submitting code changes. Thank you for your interest in the project!
 
