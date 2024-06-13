@@ -154,7 +154,7 @@
                                                         <td class="col-9 table-item" style="padding-left: 1rem;">
                                                             <span class="truncate">{{ row [0] }}</span>
                                                         </td>
-                                                        <td class="col-2"><span id="status" data-value="{{ row[2] }}">{{ row[1] }}</span></td>
+                                                        <td class="col-2"><span class="status" id="{{ row[2] }}" data-value="{{ row[2] }}">{{ row[1] }}</span></td>
                                                         <td class="col-1">
                                                             <a class="btn btn-primary info-button" href="{{ url_for('info', id=row[2]) }}">Info</a>
                                                             <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteRunModal" onclick="handleDeleteClick('{{ row[2] }}')">Delete</button>

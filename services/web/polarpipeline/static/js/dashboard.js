@@ -192,7 +192,7 @@ function graphs(){
 
 function updateStatus(){
     var idlist = [];
-    document.querySelectorAll('#status').forEach(element => {
+    document.querySelectorAll('.status').forEach(element => {
         idlist.push(element.getAttribute('data-value'));
     });
     // console.log(idlist);
@@ -247,7 +247,7 @@ function updateStatus(){
 
         Object.entries(data.jobs).forEach(([jobId, status]) => {
             // console.log(`Job ID: ${jobId}, Status: ${status}`);
-            $(jobId).innerText = status;
+            $('#'+jobId).text(status)
         });
 
     })
