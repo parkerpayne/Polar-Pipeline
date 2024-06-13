@@ -190,3 +190,70 @@ function graphs(){
 }
 
 
+function updateStatus(){
+    var idlist = [];
+    document.querySelectorAll('#status').forEach(element => {
+        idlist.push(element.getAttribute('data-value'));
+    });
+    // console.log(idlist);
+
+    fetch('/update-dashboard', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ job_ids: idlist })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // console.log('Success:', data);
+
+        const statusCard = document.getElementById('statusCard');
+        statusCard.innerHTML = ''; // Clear existing content
+
+        if (data.nodes && data.nodes.length > 0) {
+            data.nodes.forEach(node => {
+                // Create the row div
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row align-items-center';
+
+                // Create the image div
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'col-auto';
+                const img = document.createElement('img');
+                img.src = '/static/server.png'; // Ensure this path is correct
+                img.className = 'icon';
+                img.style.width = '30px';
+                img.style.height = '30px';
+                imgDiv.appendChild(img);
+
+                // Create the text div
+                const textDiv = document.createElement('div');
+                textDiv.className = 'col-auto';
+                const span = document.createElement('span');
+                span.innerText = node;
+                textDiv.appendChild(span);
+
+                // Append image and text divs to the row div
+                rowDiv.appendChild(imgDiv);
+                rowDiv.appendChild(textDiv);
+
+                // Append the row div to the statusCard
+                statusCard.appendChild(rowDiv);
+            });
+        } else {
+            console.log('No nodes data returned.');
+        }
+
+        Object.entries(data.jobs).forEach(([jobId, status]) => {
+            // console.log(`Job ID: ${jobId}, Status: ${status}`);
+            $(jobId).innerText = status;
+        });
+
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+    setTimeout(updateStatus, 1000);
+}
+updateStatus();

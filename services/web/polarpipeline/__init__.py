@@ -332,6 +332,36 @@ def importprogress():
             conn.rollback()
         return jsonify({"error": str(e)}), 500
 
+# route to update the status of nodes and jobs on the dashboard
+@app.route('/update-dashboard', methods=['POST'])
+def update_dashboard():
+    try:
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM status;")
+        statusList = cursor.fetchall()
+        status = []
+        for item in statusList:
+            status.append(item[0] + ': ' + item[1])
+
+        job_ids = request.json.get('job_ids', [])
+        job_status = {}
+
+        if job_ids:
+            format_strings = ','.join(['%s'] * len(job_ids))
+            query = f"SELECT id, status FROM progress WHERE id IN ({format_strings}) ORDER BY start_time;"
+            cursor.execute(query, tuple(job_ids))
+            jobs = cursor.fetchall()
+            for job in jobs:
+                job_status[job[0]] = job[1]
+
+        return jsonify({'nodes': status, 'jobs': job_status})
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return f"Error: {e}"
 
 # route for the dashboard
 @app.route('/dashboard')

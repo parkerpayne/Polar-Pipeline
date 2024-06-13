@@ -74,10 +74,17 @@
                         <div class="card-header">
                             Node Status
                         </div>
-                        <div class="card-body">
+                        <div class="card-body" id="statusCard">
                             {% for node in status %}
                                 {% if node != '' %}
-                                    <img src="{{ url_for('static', filename='server.png') }}" class="icon" style="width:30px;height:30px"><span>{{ node }}</span><br>
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <img src="{{ url_for('static', filename='server.png') }}" class="icon" style="width:30px;height:30px">
+                                        </div>
+                                        <div class="col-auto">
+                                            <span>{{ node }}</span>
+                                        </div>
+                                    </div>
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -147,7 +154,7 @@
                                                         <td class="col-9 table-item" style="padding-left: 1rem;">
                                                             <span class="truncate">{{ row [0] }}</span>
                                                         </td>
-                                                        <td class="col-2"><span id="status">{{ row[1] }}</span></td>
+                                                        <td class="col-2"><span id="status" data-value="{{ row[2] }}">{{ row[1] }}</span></td>
                                                         <td class="col-1">
                                                             <a class="btn btn-primary info-button" href="{{ url_for('info', id=row[2]) }}">Info</a>
                                                             <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteRunModal" onclick="handleDeleteClick('{{ row[2] }}')">Delete</button>
