@@ -221,7 +221,10 @@ def viewSortIndex(input_path, threads='30'):
 #  | . ` |  __|   > <    | |  |  __| | |   | |  | |\ \/  \/ /   |  __| | |  | | . ` | |       | |    | || |  | | . ` |
 #  | |\  | |____ / . \   | |  | |    | |___| |__| | \  /\  /    | |    | |__| | |\  | |____   | |   _| || |__| | |\  |
 #  |_| \_|______/_/ \_\  |_|  |_|    |______\____/   \/  \/     |_|     \____/|_| \_|\_____|  |_|  |_____\____/|_| \_|
+
+#  ---------------------------------------------------------------------------------------------------------------
 #  VERSION 2.2.3 (SNIFFLES DOES NOT COMPLETE?)
+#  ---------------------------------------------------------------------------------------------------------------
 
 # def nextflow(input_file, output_directory, reference_file, clair3_model_path, threads='30'):
 # # Function to run the epi2me nextflow workflow. Assumes nextflow is installed into path.
@@ -293,7 +296,10 @@ def viewSortIndex(input_path, threads='30'):
 #     except:
 #         return False
 
+
+#  ---------------------------------------------------------------------------------------------------------------
 #  VERSION 1.8.1
+#  ---------------------------------------------------------------------------------------------------------------
 
 def nextflow(input_file, output_directory, reference_file, clair3_model_path, threads='30'):
 # Function to run the epi2me nextflow workflow. Assumes nextflow is installed into path.
