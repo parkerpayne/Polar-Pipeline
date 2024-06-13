@@ -52,7 +52,7 @@ The Polar Pipeline is a powerful Flask-based web application and pipeline tailor
 This pipeline was developed and tested on Ubuntu 22.04. Other debian-based distros should work, such as Mint, but they are similarly untested. As it is in a Docker container, it may be possible to host the application on a Windows environment, but modifications to the code will be required.
 
 
-1. In the host computer's ```/mnt``` directory, establish new directories for both input and output locations. Utilize NFS to grant accessibility to these locations from the host computer's ```mnt/``` directory, which will necessitate the installation of ```nfs-common```. Ensure replication of this directory structure, including NFS, within all workers' ```/mnt/``` directory. Refer to the provided directory structure diagram for clarity. ![Directory Structure Diagram](./misc/directorystruc.jpg)
+1. In the host computer's ```/mnt``` directory, establish new directories for both input and output locations. Utilize NFS to grant accessibility to these locations from the host computer's ```/mnt``` directory, which will necessitate the installation of ```nfs-common```. Ensure replication of this directory structure, including NFS, within all workers' ```/mnt``` directory. Refer to the provided directory structure diagram for clarity. ![Directory Structure Diagram](./misc/directorystruc.jpg)
 
 2. Clone the repository to the home directory (or download as zip and unzip into home directory) on the host computer.
 
