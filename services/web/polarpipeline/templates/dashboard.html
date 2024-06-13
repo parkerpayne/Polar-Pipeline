@@ -125,72 +125,76 @@
 
                 </div>
                 <div class="col-lg-9">
-                    <div class="card" style="margin-bottom: 1rem; border-radius: 10px;">
-                        <div class="card-header">
-                            Overview
-                        </div>
-                        <div class="card-body" style="padding: 0;">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th class="col-9" style="padding-left: 1rem;">Run Name</th>
-                                        <th class="col-2">Status</th>
-                                        <th class="col-1"><button class="btn btn-primary" id="editButton">Edit</button></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in rows[::-1] %}
-                                        {% if row[1] != 'waiting' %}
-                                            <tr>
-                                                <td class="col-9 table-item" style="padding-left: 1rem;">
-                                                    <span class="truncate">{{ row [0] }}</span>
-                                                </td>
-                                                <td class="col-2"><span id="status">{{ row[1] }}</span></td>
-                                                <td class="col-1">
-                                                    <a class="btn btn-primary info-button" href="{{ url_for('info', id=row[2]) }}">Info</a>
-                                                    <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteRunModal" onclick="handleDeleteClick('{{ row[2] }}')">Delete</button>
-                                                </td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-footer">
-                            <div class="row justify-content-end">
-                                <div class="col">
-                                    <div class="dropdown">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                                          Manage
-                                        </button>
-                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                          <li><a class="dropdown-item" href="{{ url_for('exportprogress') }}">Export Database</a></li>
-                                          <li><span class="dropdown-item" data-bs-toggle="modal" data-bs-target="#importModal" style="cursor: pointer">Import Database</span></li>
-                                        </ul>
-                                      </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="card" style="margin-bottom: 1rem; border-radius: 10px;">
+                                <div class="card-header">
+                                    Overview
                                 </div>
-                                <div class="col-auto">
-                                    {% if currpage > 1 %}
-                                        <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage-2) }}"><</a>
-                                    {% endif %}
-                                        <button class="btn btn-light" disabled>Page {{ currpage }}/{{ totalpages }}</button>
-                                    {% if currpage < totalpages %}
-                                        <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage) }}">></a>
-                                    {% endif %}
+                                <div class="card-body" style="padding: 0;">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-9" style="padding-left: 1rem;">Run Name</th>
+                                                <th class="col-2">Status</th>
+                                                <th class="col-1"><button class="btn btn-primary" id="editButton">Edit</button></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in rows[::-1] %}
+                                                {% if row[1] != 'waiting' %}
+                                                    <tr>
+                                                        <td class="col-9 table-item" style="padding-left: 1rem;">
+                                                            <span class="truncate">{{ row [0] }}</span>
+                                                        </td>
+                                                        <td class="col-2"><span id="status">{{ row[1] }}</span></td>
+                                                        <td class="col-1">
+                                                            <a class="btn btn-primary info-button" href="{{ url_for('info', id=row[2]) }}">Info</a>
+                                                            <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteRunModal" onclick="handleDeleteClick('{{ row[2] }}')">Delete</button>
+                                                        </td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="row justify-content-end">
+                                        <div class="col">
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                  Manage
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                  <li><a class="dropdown-item" href="{{ url_for('exportprogress') }}">Export Database</a></li>
+                                                  <li><span class="dropdown-item" data-bs-toggle="modal" data-bs-target="#importModal" style="cursor: pointer">Import Database</span></li>
+                                                </ul>
+                                              </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            {% if currpage > 1 %}
+                                                <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage-2) }}"><</a>
+                                            {% endif %}
+                                                <button class="btn btn-light" disabled>Page {{ currpage }}/{{ totalpages }}</button>
+                                            {% if currpage < totalpages %}
+                                                <a class="btn btn-primary" href="{{ url_for('dashboard', page=currpage) }}">></a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="container">
-                    <div class="card" style="margin-bottom: 1rem; border-radius: 10px">
-                        <div class="card-header">
-                            Reference Timings
-                        </div>
-                        <div class="card-body">
-                            <canvas id="refTimingChart" width="400" height="200"></canvas>
+                    <div class="row">
+                        <div class="container">
+                            <div class="card" style="margin-bottom: 1rem; border-radius: 10px">
+                                <div class="card-header">
+                                    Reference Timings
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="refTimingChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

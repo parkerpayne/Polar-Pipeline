@@ -89,6 +89,8 @@ function graphs(){
 
     var refLabels = referenceData.map(row => row.reference);
     var refData = referenceData.map(row => row.count);
+    var fullLabels = refLabels;
+    var abbreviatedLabels = fullLabels.map(label => label.length > 5 ? label.slice(0, 15) + '...' : label);
     var dynamicColors = [];
     for (var i = 0; i < refLabels.length; i++) {
         var r = Math.floor(Math.random() * 256);
@@ -101,7 +103,7 @@ function graphs(){
     var refChart = new Chart(refctx, {
         type: 'pie',
         data: {
-            labels: refLabels,
+            labels: abbreviatedLabels,
             datasets: [{
                 label: 'Reference Counts',
                 data: refData,
@@ -114,6 +116,13 @@ function graphs(){
             plugins: {
                 legend: {
                     position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItem){
+                            return fullLabels[tooltipItem[0].dataIndex];
+                        }
+                    }
                 }
             }
         }
@@ -122,7 +131,10 @@ function graphs(){
 
     var computers = [...new Set(refTimingData.map(item => item.computer))];
     var references = [...new Set(refTimingData.map(item => item.reference))];
-    // console.log(refTimingData);
+    var fullLabels = references;
+    var abbreviatedLabels = fullLabels.map(label => label.length > 5 ? label.slice(0, 15) + '...' : label);
+
+
     var dynamicColors = {};
     computers.forEach((computer, index) => {
         var r = Math.floor(Math.random() * 256);
@@ -152,7 +164,7 @@ function graphs(){
     var reftimchart = new Chart(refTimingCtx, {
         type: 'bar',
         data: {
-            labels: references,
+            labels: abbreviatedLabels,
             datasets: datasets
         },
         options: {
@@ -161,6 +173,13 @@ function graphs(){
                 legend: {
                     display: true,
                     position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItem){
+                            return fullLabels[tooltipItem[0].dataIndex];
+                        }
+                    }
                 }
             }
         }
