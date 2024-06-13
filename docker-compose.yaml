@@ -6,14 +6,16 @@ services:
       - ./services/web/:/usr/src/app
       - ./services/web/vep/:/usr/src/app/vep
       - ./services/web/vep/.vep:/root/.vep
-      - ./mnt:/mnt
+      - /mnt:/mnt
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
     ports:
       - 5000:5000
     env_file:
       - ./services/.env.dev
     networks:
       static-network:
-        ipv4_address: 10.20.0.88
+        ipv4_address: 10.20.1.88
     labels:
       com.polar.pipeline.service: "web"
   status:
@@ -25,7 +27,7 @@ services:
       - ./services/.env.dev
     networks:
       static-network:
-        ipv4_address: 10.20.0.77
+        ipv4_address: 10.20.1.77
     labels:
       com.polar.pipeline.service: "status"
   db:
@@ -41,7 +43,7 @@ services:
       - 5432:5432
     networks:
       static-network:
-        ipv4_address: 10.20.0.66
+        ipv4_address: 10.20.1.66
     labels:
       com.polar.pipeline.service: "db"
   rabbitmq:
@@ -53,14 +55,14 @@ services:
       - "15672:15672"  # RabbitMQ Management UI
     networks:
       static-network:
-        ipv4_address: 10.20.0.55
+        ipv4_address: 10.20.1.55
     labels:
       com.polar.pipeline.service: "rabbitmq"
 networks:
   static-network:
     ipam:
       config:
-        - subnet: 10.20.0.0/16
+        - subnet: 10.20.1.0/24
 volumes:
   postgres_data:
     

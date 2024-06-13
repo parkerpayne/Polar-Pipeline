@@ -31,13 +31,13 @@ else
     echo "Docker is already installed."
     
     # Check the mnt directory
-    MNT_DIR="./mnt"
+    MNT_DIR="/mnt"
     if [ -d "$MNT_DIR" ]; then
         all_nonempty=true
         for dir in "$MNT_DIR"/*; do
             if [ -d "$dir" ]; then
                 if ! is_nonempty_dir "$dir"; then
-                    echo "Directory $dir is empty. There appear to be input/output directories that have failed to mount. If they appear to be mounted, run the fixmounts script."
+                    echo "Directory $dir is empty. There appear to be input/output directories that have failed to mount. May need to run the fixmounts script."
                 fi
             fi
         done
@@ -54,7 +54,7 @@ fi
 
 VEP_DIR="./services/web/vep"
 declare -A required_files=(
-    ["SNV Report"]="$VEP_DIR/ensembl-vep/ $VEP_DIR/vep-resources/ $VEP_DIR/.vep/ $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.fai $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.index $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta"
+    ["SNV Report"]="$VEP_DIR/ensembl-vep-release-112/ $VEP_DIR/vep-resources/ $VEP_DIR/.vep/ $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.fai $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.index $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta"
     ["SV Report"]="$VEP_DIR/hg38.refGene $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.fai $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta.index $VEP_DIR/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta"
 )
 

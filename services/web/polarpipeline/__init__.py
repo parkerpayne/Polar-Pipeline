@@ -86,6 +86,7 @@ base_path = '/mnt'
 def alphabetize(item):
     return item.lower()
 
+# just makes the default landing page the dashboard
 @app.route('/')
 def home():
     return redirect(url_for('dashboard'))
@@ -94,7 +95,7 @@ def home():
 @app.route('/browse/<path:path>')
 @app.route('/browse')
 def browse(path=None):
-    if path is None:
+    if not path or not path.startswith('mnt'):
         path = base_path
 
     # builds what is shown in the browser, such as current path, the previous level's path, and the files to show
@@ -168,9 +169,9 @@ def trigger_processing():
         try:
             # initializes database entry for the dashboard/info pages
             conn = psycopg2.connect(**db_config)
-            query = "INSERT INTO progress (file_name, status, id, clair_model, bed_file, reference, gene_source) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT INTO progress (file_name, status, id, clair_model, bed_file, reference, gene_source, file_path) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             with conn.cursor() as cursor:
-                cursor.execute(query, (file_name, 'waiting', id, clair_model, ', '.join(grch_bed), grch_reference, ', '.join(grch_gene)))
+                cursor.execute(query, (file_name, 'waiting', id, clair_model, ', '.join(grch_bed), grch_reference, ', '.join(grch_gene), request.json.get("path")))
             conn.commit()
         except Exception as e:
             print(f"Error updating the database: {e}")
@@ -187,9 +188,9 @@ def trigger_processing():
         try:
             # initializes database entry for the dashboard/info pages
             conn = psycopg2.connect(**db_config)
-            query = "INSERT INTO progress (file_name, status, id, clair_model, bed_file, reference, gene_source) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT INTO progress (file_name, status, id, clair_model, bed_file, reference, gene_source, file_path) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             with conn.cursor() as cursor:
-                cursor.execute(query, (file_name, 'waiting', id, clair_model, ', '.join(chm_bed), chm_reference, 'N/A'))
+                cursor.execute(query, (file_name, 'waiting', id, clair_model, ', '.join(chm_bed), chm_reference, 'N/A', request.json.get("path")))
             conn.commit()
         except Exception as e:
             print(f"Error updating the database: {e}")
@@ -249,6 +250,8 @@ def remove(removepath):
         os.remove(full_path)
     return redirect(url_for('configuration'))
 
+# route to send a csv file of the current history to the user. 
+# accessed from the manage dropdown on the dashboard
 @app.route('/exportProgress')
 def exportprogress():
     try:
@@ -282,7 +285,9 @@ def exportprogress():
     except Exception as e:
         conn.rollback()
         return f"Error: {e}"
-    
+
+# route to take in a csv as created by the export route, delete the current data in the database, then restore history from the provided file
+# accessed from the manage dropdown on the dashboard
 @app.route('/importProgress', methods=['POST'])
 def importprogress():
     try:
@@ -295,6 +300,9 @@ def importprogress():
         # If the user does not select a file, the browser may submit an empty part without filename
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
+        
+        if not file.filename.endswith('.csv'):
+            return jsonify({"error": "File is not in correct format"}), 400
 
         # Save the file to the /tmp/pipeline_export directory
         file_path = os.path.join('/tmp/pipeline_export', file.filename)
@@ -305,6 +313,7 @@ def importprogress():
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
 
+        cursor.execute('DELETE FROM progress')
         # Use COPY FROM to import data from the CSV file
         with open(file_path, 'r') as f:
             cursor.copy_expert("COPY progress FROM STDIN WITH CSV HEADER", f)
@@ -598,6 +607,22 @@ def id_decode(input_string, encode_pattern, omission_pattern, omission):
         output += intended_pos[i+1]
     return output
 
+@app.route('/start-worker.sh')
+def workerscript():
+    fstab_line = ''
+    for line in open('/usr/src/app/polarpipeline/static/fstab.tmp'):
+        if line:
+            fstab_line = line.strip()
+    with open('/usr/src/app/polarpipeline/static/start-worker.sh', 'w') as opened:
+        for line in open('/usr/src/app/polarpipeline/static/start-worker.tmp'):
+            if line.strip().startswith('#!'):
+                print('beginning')
+                opened.write(line + f'\nFSTAB_LINE="{fstab_line}"\n')
+            else:
+                opened.write(line)
+    return send_file('/usr/src/app/polarpipeline/static/start-worker.sh', as_attachment=True, download_name='start-worker.sh')
+    
+
 # route to add a new worker configuration (threads and sudo password)
 # accessed by the + button by the worker configuration header on the configuration page
 @app.route('/add_computer', methods=['POST'])
@@ -652,7 +677,6 @@ def save_configuration():
 
     # runs function to save the section
     save_config(computer_name, config_values)
-
     return 'success'
 
 # route to remove a worker configuration
@@ -1316,11 +1340,10 @@ def get_info(id):
 # opens a socket with a log file as the output. this lets the info page display the terminal output from the respective worker if the worker is outputting the log to a file
 @socketio.on('request_file')
 def handle_request_file(worker_name):
-    alreadyprocessed = ''
     file_path = f'{worker_name}.log'
     event_name = f'log_{worker_name}'
 
-    with open(f'/usr/src/app/polarpipeline/resources/{file_path}', 'r', buffering=1) as file:
+    with open(f'/usr/src/app/polarpipeline/resources/worker_logs/{file_path}', 'r', buffering=1) as file:
 
         # line = file.readline()
         # while line:
@@ -1329,6 +1352,18 @@ def handle_request_file(worker_name):
         #     line = file.readline()
 
         # socketio.emit(event_name, alreadyprocessed)
+        preload = []
+        while True:
+            line = file.readline()
+            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR') and not line.startswith('Use of uni'):
+                preload.append(line)
+            if '] succeeded in' in line:
+                preload = []
+            if not line:
+                break
+        for line in preload:
+            socketio.emit(event_name, line)
+        
         while True:
             line = file.readline()
             if not line:
@@ -1577,11 +1612,16 @@ def writeText(chrom, pos, protein_pos, nm_id, c_id, p_id, aka_p_id, symbol, og_p
             The {og_protein} at codon {protein_pos} is replaced by {new_protein}, {description}. This alteration is predicted to be deleterious{tools_text}. The {aka_p_id} variant {rarity_text}\
             The {symbol} gene is located on Chromosome {chrom}, and the variant is located at position {pos} on the chromosome. {dbsnp_text}{clinvar_text}")
 
+genome = None
+transcripts = None
+
 # function to generate the report text from the chromosome, position, ref allele, and alt allele. 
 def generateReport(chr, pos, ref, alt):
     global aminoacid_properties
     global amino_abbrev
     global alternate_strand_base
+    global genome
+    global transcripts
     
     var_id = f'chr{chr}_{pos}_{ref}/{alt}'
 
@@ -1651,7 +1691,15 @@ def generateReport(chr, pos, ref, alt):
         
         # find the HGVS consequence ID, adding a score if successful, using a placeholder otherwise
         try:
-            c_id = row['HGVSc'].split(':')[1]
+            if not genome:
+                # load reference fasta
+                genome = Fasta('/usr/src/app/vep/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta')
+            if not transcripts:
+            # load transcripts from the refgene file
+                with open('/usr/src/app/vep/hg38.refGene') as infile:
+                    transcripts = pu.read_transcripts(infile)
+            raw_c_id = pyhgvsv.format_hgvs_name(chr, int(pos), ref, alt, genome, transcripts[nm_id])
+            c_id = raw_c_id.split(':')[1]
             score += 1
         except Exception as e:
             print('HGVSc ID ERROR')
@@ -2061,7 +2109,7 @@ def extractsniffles():
 @app.route('/svreport')
 def reportbrowse(path=None):
     # if path outside of the allowed directory, redirect to the mount directory
-    if path is None or not path.startswith('mnt'):
+    if not path or not path.startswith('mnt'):
         path = base_path
 
     # build the actual path
@@ -2089,8 +2137,8 @@ def count_lines(filename):
         return '0'
     
 def convert_timestamp(timestamp):
-    datetime_obj = datetime.strptime(timestamp, '%y-%m-%d_%H-%M-%S')
-    formatted_datetime = datetime_obj.strftime('%d-%m-%Y;%H:%M:%S')
+    datetime_obj = datetime.strptime(timestamp, '%d-%m-%y_%H-%M-%S')
+    formatted_datetime = datetime_obj.strftime('%d-%m-%y;%H:%M:%S')
     return formatted_datetime
 
 def buildfreqlist():
@@ -2553,7 +2601,7 @@ def searchcancelled():
 @app.route('/qcbrowse/<path:path>')
 @app.route('/qcbrowse')
 def qcbrowse(path=None):
-    if path is None:
+    if not path or not path.startswith('mnt'):
         path = base_path
 
     full_path = os.path.join('/', path)
@@ -2634,7 +2682,7 @@ def qc(path=None):
 @app.route('/filesearchbrowse/<path:path>')
 @app.route('/filesearchbrowse/')
 def filesearchbrowse(path=None):
-    if path is None:
+    if not path or not path.startswith('mnt'):
         path = base_path
 
     full_path = os.path.join('/', path)

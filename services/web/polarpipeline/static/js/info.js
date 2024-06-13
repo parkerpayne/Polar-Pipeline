@@ -21,12 +21,7 @@ function updateInfo(id) {
 }
 
 // Get the file name from the Flask route parameter (you may need to adapt this based on your actual route)
-var id = '{{ id }}';
-var file_name = '{{ file_name }}';
-var endTime = '{{ endTime }}';
-var startTime = '{{ startTime }}';
-var computer = '{{ computer }}';
-var status = '{{ status }}';
+
 // Call the updateInfo function every second
 if (status != "complete") {
     setInterval(function () {

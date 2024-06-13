@@ -114,8 +114,9 @@
                 </div>
 
                 <div class="dashboard-container">
-                    <h3>1 - Dependencies</h3>
-                    <p>Install necessary dependencies using the following commands.</p>
+                    <h3>1 - Export Home Directory to Workers</h3>
+                    <p>Assuming you have cloned the repository into the home directory, you will export the home directory to your worker's IP addresses. Add the following line to the server's <code>/etc/exports</code> file for each worker, 
+                    replacing <code>[USER]</code> with the username of the server and replacing <code>[WORKER IP]</code> with the local IP of the worker you intend to add.</p>
                     <div class="terminal-card">
                         <!-- Terminal Card Bar -->
                         <div class="terminal-card-bar">
@@ -126,18 +127,10 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>sudo apt install -y pigz bedtools tabix celery nfs-common python3-pip<br>pip install psycopg2-binary bs4<br>sudo cpan DBI Math::CDF List::MoreUtils</code>
+                            <code>/home/[USER]  [WORKER IP](rw,sync,no_root_squash,no_subtree_check)</code>
                         </div>
                     </div>
-                </div>
-
-                <div class="dashboard-container">
-                    <h3>2 - Minimap</h3>
-                    <p>Download <a href="https://github.com/lh3/minimap2/releases" target="blank">minimap2</a>. Put the minimap2 folder in the home directory. You will now need to add the minimap folder to <code>PATH</code>. <code>PATH</code> is a linux environment variable.
-                        It is a string of paths separated by <code>:</code> that define what directories to search for executables in when a command is invoked.
-                        This variable is referenced by <code>$PATH</code> and can be defined in the <code>.bashrc</code> file in the home directory. Nano into the 
-                        <code>.bashrc</code> and add the following at the end.
-                    </p>
+                    <p><br>After adding this line, run</p>
                     <div class="terminal-card">
                         <!-- Terminal Card Bar -->
                         <div class="terminal-card-bar">
@@ -148,11 +141,16 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>PATH="/new/minimap/path:$PATH"</code>
+                            <code>sudo systemctl restart nfs-kernel-server</code>
                         </div>
                     </div>
-                    <p><br>This adds the minimap directory to the front of the <code>PATH</code> variable, meaning it will be searched first, improving speed
-                        of locating minimap when running the command. The following source command refreshes the environment, updating <code>PATH</code>.</p>
+                    <p><br>to save the changes.</p>
+                </div>
+
+                <div class="dashboard-container">
+                    <h3>2 - Worker Setup Script</h3>
+                    <p>Download <a href="{{ url_for('workerscript') }}">the worker startup script</a>. Run this code from anywhere on the worker computer to install all needed files and programs. This will likely take hours, as many files for VEP are large.
+                    At the end you will be prompted to restart your computer. At this point, run the script again to start the worker. The script can be run using</p>
                     <div class="terminal-card">
                         <!-- Terminal Card Bar -->
                         <div class="terminal-card-bar">
@@ -163,120 +161,21 @@
 
                         <!-- Terminal Card Content -->
                         <div class="terminal-card-content">
-                            <code>source .bashrc</code>
+                            <code>chmod +x ./start-worker.sh<br>./start-worker.sh</code>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-container">
-                    <h3>3 - Samtools</h3>
-                    <p>Download <a href="http://www.htslib.org/" target=blank>Samtools</a>. Place Samtools folder in the home directory like minimap. Add the Samtools folder to <code>PATH</code> like so:</p>
-                    <div class="terminal-card">
-                        <!-- Terminal Card Bar -->
-                        <div class="terminal-card-bar">
-                            <div class="traffic-light green"></div>
-                            <div class="traffic-light yellow"></div>
-                            <div class="traffic-light red"></div>
-                        </div>
-
-                        <!-- Terminal Card Content -->
-                        <div class="terminal-card-content">
-                            <code>PATH="/new/samtools/path:$PATH"</code>
-                        </div>
-                    </div>
-                    <p><br>Update the environment by running:</p>
-                    <div class="terminal-card">
-                        <!-- Terminal Card Bar -->
-                        <div class="terminal-card-bar">
-                            <div class="traffic-light green"></div>
-                            <div class="traffic-light yellow"></div>
-                            <div class="traffic-light red"></div>
-                        </div>
-
-                        <!-- Terminal Card Content -->
-                        <div class="terminal-card-content">
-                            <code>source .bashrc</code>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-container">
-                    <h3>4 - Nextflow</h3>
-                    <p>Install nextflow using the following commands:</p>
-                    <div class="terminal-card">
-                        <!-- Terminal Card Bar -->
-                        <div class="terminal-card-bar">
-                            <div class="traffic-light green"></div>
-                            <div class="traffic-light yellow"></div>
-                            <div class="traffic-light red"></div>
-                        </div>
-
-                        <!-- Terminal Card Content -->
-                        <div class="terminal-card-content">
-                            <code>curl -s https://get.nextflow.io | bash<br>sudo mv nextflow /usr/local/bin</code>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-container">
-                    <h3>5 - Vep</h3>
-                    <p>Download <a href="https://github.com/Ensembl/ensembl-vep/releases" target=blank>VEP</a> and the <a href="https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html" target=blank>following plugins</a>:</p>
-                    <ul>
-                        <li>LoFtool</li>
-                        <li>Mastermind</li>
-                        <li>CADD</li>
-                        <li>Carol</li>
-                        <li>Condel</li>
-                        <li>pLI</li>
-                        <li>PrimateAI</li>
-                        <li>dbNSFP</li>
-                        <li>REVEL</li>
-                        <li>AlphaMissense</li>
-                        <li>EVE</li>
-                        <li>DisGeNET</li>
-                    </ul>
-                    <p>There should be three folders in the home directory, <code>ensembl-vep</code>, <code>.vep</code> and <code>vep-resources</code>, the latter containing ALL extra files
-                    required by the plugins. Follow the directions provided on the <a href="https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html" target=blank>plugins</a> page to set up each one.</p>
-
-                    <p>Inside the <code>.vep</code> directory, there will be a file at <code>/home/{PCNAME}/.vep/Plugins/config/Condel/config/condel_SP.conf</code>
-                    The first line of that file contains a path for some reason, and this path is necessary for sift and polyphen. I don't know why. You must
-                    replace the path with the path to the Condel folder. For instance, if the file's path is 
-                    <code>/home/worker1/.vep/Plugins/config/Condel/config/condel_SP.conf</code>, you will define <code>condel.dir</code> as 
-                    <code>/home/worker1/.vep/Plugins/config/Condel</code>.</p>
-                </div>
-
-                <div class="dashboard-container">
-                    <h3>6 - Shared Directories</h3>
-                    <p>Set up NFS for the resources. Create the NFS directory <code>/mnt/pipeline_resources/</code> on the worker. Connect it to the <code>resources</code>
-                    folder in the host machine located at <code>.../polar-pipeline/services/web/polarpipeline/resources</code>.</p>
-                </div>
-
-                <div class="dashboard-container">
-                    <h3>7 - Set up final variables</h3>
-                    <p>On the Configuration page, there are a couple more things to configure. Define the output directories under Output, the server's local ip under Network, 
-                    as well as the threads and sudo password for each worker under Worker Configuration. The name should match the output of <code>whoami</code> run on the worker
-                    .</p>
+                    <h3>3 - Set up final variables</h3>
+                    <p>On the Configuration page, there are a couple more things to configure. Define the output directories under Output, the server's local IP under Network, 
+                    as well as the threads for each worker under Worker Configuration. The name should match the output of <code>whoami</code> run on the worker.</p>
                 </div>
 
                 <div class="dashboard-container">
                     <h3>Complete</h3>
-                    <p>The setup should at this point be complete, and the worker can be started by running the celery app from the <code>/mnt/pipeline_resources</code> directory:</p>
-                    <div class="terminal-card">
-                        <!-- Terminal Card Bar -->
-                        <div class="terminal-card-bar">
-                            <div class="traffic-light green"></div>
-                            <div class="traffic-light yellow"></div>
-                            <div class="traffic-light red"></div>
-                        </div>
-
-                        <!-- Terminal Card Content -->
-                        <div class="terminal-card-content">
-                            <code>cd /mnt/pipeline_resources</code><br>
-                            <code>celery -A tasks worker --concurrency=1 --prefetch-multiplier=1 --loglevel=INFO > $(whoami).log 2>&1</code>
-                        </div>
-                    </div>
+                    <p>The setup should at this point be complete, and jobs can now be queued from the "File Select" tab. The worker can be started at any point by running the <code>start-worker</code> script.</p>
                 </div>
-
                 <div class="container" style="min-height:100px"></div>
 
             </div>

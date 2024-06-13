@@ -1,0 +1,137 @@
+ 
+ -------------- celery@i9a6000 v5.2.3 (dawn-chorus)
+--- ***** ----- 
+-- ******* ---- Linux-5.15.0-107-generic-x86_64-with-glibc2.35 2024-06-06 07:25:33
+- *** --- * --- 
+- ** ---------- [config]
+- ** ---------- .> app:         tasks:0x7efd58dae260
+- ** ---------- .> transport:   amqp://guest:**@10.21.5.24:5672//
+- ** ---------- .> results:     disabled://
+- *** --- * --- .> concurrency: 1 (prefork)
+-- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+--- ***** ----- 
+ -------------- [queues]
+                .> celery           exchange=celery(direct) key=celery
+                
+
+[tasks]
+  . tasks.process
+  . tasks.processT2T
+
+[2024-06-06 07:25:33,404: INFO/MainProcess] Connected to amqp://guest:**@10.21.5.24:5672//
+[2024-06-06 07:25:33,409: INFO/MainProcess] mingle: searching for neighbors
+[2024-06-06 07:25:34,456: INFO/MainProcess] mingle: all alone
+[2024-06-06 07:25:34,492: INFO/MainProcess] celery@i9a6000 ready.
+[2024-06-06 07:25:51,143: INFO/MainProcess] Task tasks.process[3c1997f9-0368-4858-b993-eb67df3a02bc] received
+[2024-06-06 07:25:51,158: WARNING/ForkPoolWorker-1] output path:
+[2024-06-06 07:25:51,158: WARNING/ForkPoolWorker-1]  
+[2024-06-06 07:25:51,158: WARNING/ForkPoolWorker-1] /mnt/synology4/polar_pipeline
+[2024-06-06 07:25:51,158: WARNING/ForkPoolWorker-1] threads detected: 30
+[2024-06-06 07:25:51,158: WARNING/ForkPoolWorker-1] file is local!
+[2024-06-06 07:25:51,159: WARNING/ForkPoolWorker-1] found file MERGED_2024-05-24_RV_8534974_noAS_5kHZ_SUP!
+[2024-06-06 07:25:51,159: WARNING/ForkPoolWorker-1] directory identified!
+[2024-06-06 07:27:18,343: WARNING/ForkPoolWorker-1] input: /home/i9a6000/polarPipelineNFWork/05af446f371a6444466b7a4c9f49010777c8288b901378e8407b7f01be7d3448
+[2024-06-06 07:27:18,343: WARNING/ForkPoolWorker-1] output file destination: /mnt/synology4/polar_pipeline/2024-06-06_07-27-18_MERGED_2024-05-24_RV_8534974_noAS_5kHZ_SUP
+[M::mm_idx_gen::31.581*1.16] collected minimizers
+[M::mm_idx_gen::32.602*1.95] sorted minimizers
+[M::main::32.602*1.95] loaded/built the index for 195 target sequence(s)
+[M::mm_mapopt_update::33.459*1.93] mid_occ = 694
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 195
+[M::mm_idx_stat::33.971*1.92] distinct minimizers: 100167746 (38.80% are singletons); average occurrences: 5.519; average spacing: 5.607; total length: 3099922541
+[M::worker_pipeline::77.529*14.85] mapped 86994 sequences
+[M::worker_pipeline::120.216*18.16] mapped 80360 sequences
+[M::worker_pipeline::173.259*19.00] mapped 84514 sequences
+[M::worker_pipeline::217.402*19.78] mapped 82669 sequences
+[M::worker_pipeline::255.153*20.78] mapped 91284 sequences
+[M::worker_pipeline::297.126*21.71] mapped 79401 sequences
+[M::worker_pipeline::335.117*22.37] mapped 84019 sequences
+[M::worker_pipeline::385.080*22.12] mapped 83319 sequences
+[M::worker_pipeline::425.659*22.47] mapped 87014 sequences
+[M::worker_pipeline::473.313*22.58] mapped 81299 sequences
+[M::worker_pipeline::511.369*22.98] mapped 81957 sequences
+[M::worker_pipeline::553.609*23.22] mapped 82232 sequences
+[M::worker_pipeline::588.077*23.50] mapped 85123 sequences
+[M::worker_pipeline::634.987*23.38] mapped 82648 sequences
+[M::worker_pipeline::675.926*23.56] mapped 83649 sequences
+[M::worker_pipeline::717.420*23.58] mapped 82873 sequences
+[M::worker_pipeline::765.983*23.49] mapped 86930 sequences
+[M::worker_pipeline::815.667*23.44] mapped 80525 sequences
+[M::worker_pipeline::856.526*23.55] mapped 84115 sequences
+[M::worker_pipeline::896.418*23.74] mapped 82295 sequences
+[M::worker_pipeline::936.154*23.85] mapped 85472 sequences
+[M::worker_pipeline::978.253*23.98] mapped 83160 sequences
+[M::worker_pipeline::1017.061*24.09] mapped 82273 sequences
+[M::worker_pipeline::1060.140*24.15] mapped 85227 sequences
+[M::worker_pipeline::1098.732*24.23] mapped 83354 sequences
+[M::worker_pipeline::1140.472*24.30] mapped 83076 sequences
+[M::worker_pipeline::1187.707*24.28] mapped 81614 sequences
+[M::worker_pipeline::1240.078*24.09] mapped 87545 sequences
+[M::worker_pipeline::1278.612*24.16] mapped 81760 sequences
+[M::worker_pipeline::1319.335*24.24] mapped 82476 sequences
+[M::worker_pipeline::1359.831*24.34] mapped 85812 sequences
+[M::worker_pipeline::1398.452*24.43] mapped 82256 sequences
+[M::worker_pipeline::1438.775*24.49] mapped 85462 sequences
+[M::worker_pipeline::1483.714*24.49] mapped 78100 sequences
+[M::worker_pipeline::1526.322*24.55] mapped 80618 sequences
+[M::worker_pipeline::1571.564*24.60] mapped 85954 sequences
+[M::worker_pipeline::1606.206*24.67] mapped 95745 sequences
+[M::worker_pipeline::1655.606*24.60] mapped 82198 sequences
+[M::worker_pipeline::1711.288*24.54] mapped 82821 sequences
+[M::worker_pipeline::1751.420*24.56] mapped 87993 sequences
+[M::worker_pipeline::1795.437*24.60] mapped 81948 sequences
+[M::worker_pipeline::1840.659*24.62] mapped 84035 sequences
+[M::worker_pipeline::1879.439*24.65] mapped 82564 sequences
+[M::worker_pipeline::1924.505*24.66] mapped 81444 sequences
+[M::worker_pipeline::1978.848*24.57] mapped 82086 sequences
+[M::worker_pipeline::2019.325*24.62] mapped 84114 sequences
+[M::worker_pipeline::2079.147*24.53] mapped 82439 sequences
+[M::worker_pipeline::2123.121*24.54] mapped 81632 sequences
+[M::worker_pipeline::2165.023*24.56] mapped 84284 sequences
+[M::worker_pipeline::2210.611*24.56] mapped 79353 sequences
+[M::worker_pipeline::2262.533*24.49] mapped 84922 sequences
+[M::worker_pipeline::2310.229*24.47] mapped 80095 sequences
+[M::worker_pipeline::2355.781*24.50] mapped 86195 sequences
+[M::worker_pipeline::2401.894*24.49] mapped 84175 sequences
+[M::worker_pipeline::2443.529*24.51] mapped 88150 sequences
+[M::worker_pipeline::2483.685*24.52] mapped 90156 sequences
+
+worker: Hitting Ctrl+C again will terminate all running tasks!
+
+worker: Warm shutdown (MainProcess)
+
+worker: Cold shutdown (MainProcess)
+
+worker: Cold shutdown (MainProcess)
+[2024-06-06 08:09:53,655: WARNING/MainProcess] Exception ignored in atexit callback
+[2024-06-06 08:09:53,656: WARNING/MainProcess] : 
+[2024-06-06 08:09:53,656: WARNING/MainProcess] <function _exit_function at 0x7efd5a93ba30>
+[2024-06-06 08:09:53,656: WARNING/MainProcess] Traceback (most recent call last):
+[2024-06-06 08:09:53,656: WARNING/MainProcess]   File "/usr/lib/python3.10/multiprocessing/util.py", line 334, in _exit_function
+[2024-06-06 08:09:53,660: WARNING/MainProcess]     
+[2024-06-06 08:09:53,660: WARNING/MainProcess] _run_finalizers(0)
+[2024-06-06 08:09:53,660: WARNING/MainProcess]   File "/usr/lib/python3.10/multiprocessing/util.py", line 300, in _run_finalizers
+[2024-06-06 08:09:53,660: WARNING/MainProcess]     
+[2024-06-06 08:09:53,660: WARNING/MainProcess] finalizer()
+[2024-06-06 08:09:53,660: WARNING/MainProcess]   File "/usr/lib/python3.10/multiprocessing/util.py", line 224, in __call__
+[2024-06-06 08:09:53,660: WARNING/MainProcess]     
+[2024-06-06 08:09:53,661: WARNING/MainProcess] res = self._callback(*self._args, **self._kwargs)
+[2024-06-06 08:09:53,661: WARNING/MainProcess]   File "/usr/lib/python3/dist-packages/billiard/pool.py", line 1662, in _terminate_pool
+[2024-06-06 08:09:53,661: WARNING/MainProcess]     
+[2024-06-06 08:09:53,661: WARNING/MainProcess] cls._help_stuff_finish(*help_stuff_finish_args)
+[2024-06-06 08:09:53,661: WARNING/MainProcess]   File "/usr/lib/python3/dist-packages/celery/concurrency/asynpool.py", line 1341, in _help_stuff_finish
+[2024-06-06 08:09:53,662: WARNING/MainProcess]     
+[2024-06-06 08:09:53,662: WARNING/MainProcess] readable, _, again = _select(inqR, timeout=0.5)
+[2024-06-06 08:09:53,662: WARNING/MainProcess]   File "/usr/lib/python3/dist-packages/celery/concurrency/asynpool.py", line 165, in _select
+[2024-06-06 08:09:53,662: WARNING/MainProcess]     
+[2024-06-06 08:09:53,662: WARNING/MainProcess] return poll(readers, writers, err, timeout)
+[2024-06-06 08:09:53,662: WARNING/MainProcess]   File "/usr/lib/python3/dist-packages/celery/concurrency/asynpool.py", line 121, in _select_imp
+[2024-06-06 08:09:53,662: WARNING/MainProcess]     
+[2024-06-06 08:09:53,662: WARNING/MainProcess] events = poller.poll(timeout)
+[2024-06-06 08:09:53,662: WARNING/MainProcess]   File "/usr/lib/python3/dist-packages/celery/apps/worker.py", line 299, in _handle_request
+[2024-06-06 08:09:53,662: WARNING/MainProcess]     
+[2024-06-06 08:09:53,662: WARNING/MainProcess] raise exc(exitcode)
+[2024-06-06 08:09:53,662: WARNING/MainProcess] celery.exceptions
+[2024-06-06 08:09:53,662: WARNING/MainProcess] .
+[2024-06-06 08:09:53,662: WARNING/MainProcess] WorkerTerminate
+[2024-06-06 08:09:53,662: WARNING/MainProcess] : 
+[2024-06-06 08:09:53,662: WARNING/MainProcess] 1

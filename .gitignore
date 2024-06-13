@@ -21,5 +21,6 @@
 !**/.frequency-placeholder
 !**/frequency/createNewFrequency.py
 **/config.ini
-**/*.log
+**/worker_logs/*.log
 **/fstab.tmp
+**/worker_resources/*
