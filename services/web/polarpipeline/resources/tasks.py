@@ -656,7 +656,7 @@ def processT2T(input_file_path, output_path, clair_model_name, bed_file_name, re
     # create a run summary for T2T
     createRunSummary(
         nextflowdir, 
-        os.path.join(nextflowdir, 'output', '{run_name}.wf-human-alignment-report.html'), 
+        os.path.join(nextflowdir, 'output', 'wf-human-variation-alignment-report.html'), 
         'none',
         'none',
         os.path.join(nextflowdir, 'output', f'{run_name}.wf-human-sv-report.html'),

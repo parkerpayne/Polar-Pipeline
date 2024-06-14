@@ -338,6 +338,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
         --annotation_threads {math.floor(int(threads)/2)} \
         --disable_ping"
     try:
+        print(command)
         os.system(command)
         return True
     except:
@@ -372,6 +373,7 @@ def y_nextflow(input_file, output_directory, reference_file, clair3_model_path, 
         --merge_threads {threads} \
         --disable_ping"
     try:
+        print(command)
         os.system(command)
         return True
     except:
