@@ -41,6 +41,14 @@ check_tasks_py() {
     [ -f "$1/tasks.py" ]
 }
 
+if dpkg-query -W -f='${Status}' nfs-common 2>/dev/null | grep -q "ok installed"; then
+    # echo "nfs-common is already installed."
+else
+    # echo "nfs-common is not installed. Installing now..."
+    sudo apt update
+    sudo apt install -y nfs-common
+fi
+
 # Check if the provided line is in the fstab
 if ! check_fstab; then
     echo "Line not found in /etc/fstab. Adding it..."
@@ -97,7 +105,7 @@ if [ ${#missing_files[@]} -gt 0 ]; then
     # Step 1: Install dependencies
     echo "Installing dependencies..."
     sudo apt update
-    sudo apt install -y pigz ca-certificates curl bedtools tabix celery nfs-common python3-pip zlib1g-dev libbz2-dev liblzma-dev default-jre libncurses5-dev libncursesw5-dev libcurl4-openssl-dev screen
+    sudo apt install -y pigz ca-certificates curl bedtools tabix celery python3-pip zlib1g-dev libbz2-dev liblzma-dev default-jre libncurses5-dev libncursesw5-dev libcurl4-openssl-dev screen
     pip install psycopg2-binary bs4
     sudo cpan DBI Math::CDF List::MoreUtils Module::Build
 
