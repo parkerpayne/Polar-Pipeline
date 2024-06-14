@@ -10,9 +10,7 @@ static =
 
 [Default]
 threads = 30
-password = password
 
 [worker1]
 threads = 16
-password = password
 

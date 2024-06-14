@@ -308,7 +308,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
 #   reference_file: full path to the reference file being used
 #   clair3_model_path: full path to the clair3 model folder
     run_name = os.path.basename(input_file).replace('.bam', '')
-    command = f"nextflow run epi2me-labs/wf-human-variation -r v1.8.1 \
+    command = f"nextflow run epi2me-labs/wf-human-variation -r v1.8.2 \
         --out_dir {output_directory}/output \
         -w {output_directory}/workspace \
         -profile standard \
@@ -345,7 +345,7 @@ def nextflow(input_file, output_directory, reference_file, clair3_model_path, th
 
 def y_nextflow(input_file, output_directory, reference_file, clair3_model_path, threads='30'):
     run_name = os.path.basename(input_file).replace('.bam', '')
-    command = f"nextflow run epi2me-labs/wf-human-variation -r v1.8.1 \
+    command = f"nextflow run epi2me-labs/wf-human-variation -r v1.8.2 \
         --out_dir {output_directory}/output \
         -w {output_directory}/workspace \
         -profile standard \

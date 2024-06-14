@@ -1382,17 +1382,18 @@ def handle_request_file(worker_name):
         #     line = file.readline()
 
         # socketio.emit(event_name, alreadyprocessed)
-        preload = []
+        seen = []
+        preload = ''
         while True:
             line = file.readline()
-            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR') and not line.startswith('Use of uni'):
-                preload.append(line)
+            if not line in seen and not 'executor >  local' in line:
+                seen.append(line)
+                preload += line
             if '] succeeded in' in line:
-                preload = []
+                preload = ''
             if not line:
                 break
-        for line in preload:
-            socketio.emit(event_name, line)
+        socketio.emit(event_name, preload)
         
         while True:
             line = file.readline()
@@ -1400,8 +1401,9 @@ def handle_request_file(worker_name):
                 socketio.sleep(0.1)
                 continue
             # this if blocks all the repetitive lines that get spammed like the nextflow pipeline output as well as the vep warning lines
-            if not "process > " in line and not line.startswith("executor >  local") and not 'WARN' in line and not line.startswith("\n") and not line.startswith('merging:') and not line.startswith('Use of uninitialized value $aa_string') and not line.startswith('Argument "4:5UTR') and not line.startswith('Use of uni'):
+            if not line in seen and not 'executor >  local' in line:
                 socketio.emit(event_name, line)
+                seen.append(line)
 
 # route that cancels a job by setting the signal to stop in the database. worker should periodically check this and if the signal is set to cancelled it should stop
 # accessed by the cancelled button on the info page for any job that is running

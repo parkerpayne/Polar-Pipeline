@@ -23,7 +23,7 @@ app = Celery('tasks', broker=f'pyamqp://guest:guest@{ip}:5672/')
 
 
 # function for the regular (hg38) operations
-@app.task
+@app.task(task_acks_late = True)
 def process(input_file_path, output_path, clair_model_name, gene_source_name, bed_file_name, reference_file_name, id):
     # build paths for all necessary files
     clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)
@@ -404,7 +404,7 @@ def process(input_file_path, output_path, clair_model_name, gene_source_name, be
 
 
 
-@app.task
+@app.task(task_acks_late = True)
 def processT2T(input_file_path, output_path, clair_model_name, bed_file_name, reference_file_name, id):
     # build paths for all necessary files
     clair_model_path = os.path.join('/mnt/pipeline_resources/clair_models', clair_model_name)

@@ -229,7 +229,7 @@
                         <div class="traffic-light red"></div>
                     </div>
                     <div class="terminal-card-content">
-                        <code id="log-feed"></code>
+                        <code id="log-feed">loading...</code>
                     </div>
                 </div>
                 <script>
@@ -246,16 +246,22 @@
 
                     function listenToWorkerLogs(workerName) {
                         var eventName = 'log_' + workerName;
-
+                        var old_log = 'emptiness. darkness.';
                         socket.on(eventName, function(log) {
-                            var logFeed = document.getElementById('log-feed');
-                            var terminalContent = document.querySelector('.terminal-card-content');
-                            var isScrolledToBottom = terminalContent.scrollHeight - terminalContent.clientHeight <= terminalContent.scrollTop + 1;
-                            logFeed.innerHTML += log;
-                            // console.log(isScrolledToBottom);
-                            if (isScrolledToBottom) {
-                                terminalContent.scrollTop = terminalContent.scrollHeight;
+                            if(log !== old_log){
+                                var logFeed = document.getElementById('log-feed');
+                                var terminalContent = document.querySelector('.terminal-card-content');
+                                var isScrolledToBottom = terminalContent.scrollHeight - terminalContent.clientHeight <= terminalContent.scrollTop + 1;
+                                if(old_log == 'emptiness. darkness.'){
+                                    logFeed.innerHTML = '';
+                                }
+                                logFeed.innerHTML += log;
+                                // console.log(isScrolledToBottom);
+                                if (isScrolledToBottom) {
+                                    terminalContent.scrollTop = terminalContent.scrollHeight;
+                                }
                             }
+                            old_log = log;
                         });
                     }
                     requestWorkerLogs(computer_name);
